@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Countries.Models
+﻿namespace Countries.Models
 {
     public class Currency
     {
-        public string code { get; set; }
-        public string name { get; set; }
-        public string symbol { get; set; }
+        public string Code { get; set; }
+        public string Name { get; set; }
+        public string Symbol { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Code}-{Name}- ( {Symbol} )";
+        }
     }
 }

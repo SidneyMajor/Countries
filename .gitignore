@@ -349,3 +349,6 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 /Countries/Service/DataService.cs
+/Countries/Resource
+/Countries/Service/DataService/DataCountry.cs
+*.cs
