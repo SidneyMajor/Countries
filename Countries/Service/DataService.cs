@@ -42,6 +42,7 @@ namespace Countries.Service
                  "Area real," +
                  "Gini real," +
                  "FlagPath varchar(200)," +
+                 "FlagPathIco varchar(200)," +
                  "Alpha2Code char(2)," +
                  "Alpha3Code char(3) PRIMARY KEY)";
             try
@@ -142,19 +143,20 @@ namespace Countries.Service
                     }
                     //Image for to TreeView..
                     string fileNameIco = path + @"\Photos\PhotosIco" + $"\\{flagPath.Name}.png";
-                    if(!File.Exists(fileNameIco))
-                    {
-                      client.DownloadFile(new Uri("https://www.countryflags.io/" + $"{flagPath.Alpha2Code}" + "/shiny/64.png"), $"{fileNameIco}");
-                    }
+                   
                     
                     if(!File.Exists(path + @"\Photos" + $"\\{flagPath.Name}.jpg"))
                     {
                         try
                         {
+                            if(!File.Exists(fileNameIco))
+                            {
+                               await Task.Run(()=> client.DownloadFile(new Uri("https://www.countryflags.io/" + $"{flagPath.Alpha2Code}" + "/shiny/64.png"), $"{fileNameIco}"));
+                            }
                             string fileName = path + @"\Photos" + $"\\{flagPath.Name}.svg";
                             //string fileNameIco = path + @"\Photos\PhotosIco" + $"\\{flagPath.Name}.png";
-                            
-                            client.DownloadFile(flagPath.Flag, fileName);
+
+                            await Task.Run(() => client.DownloadFile(flagPath.Flag, fileName));
                             SvgDocument svgDocument = SvgDocument.Open(fileName);
                             htmlToImageConverter.Height = Convert.ToInt32(svgDocument.Height);
                             htmlToImageConverter.Width = Convert.ToInt32(svgDocument.Width);
@@ -182,7 +184,7 @@ namespace Countries.Service
                 }
                 watch.Stop();
                 var elapsedMs = watch.ElapsedMilliseconds;
-                _dialogService.ShowMessage("Time", elapsedMs.ToString());
+                _dialogService.ShowMessage("Time Save Images", elapsedMs.ToString());
             }
         }
         /// <summary>
@@ -262,13 +264,14 @@ namespace Countries.Service
             _command.Parameters.AddWithValue("@area", country.Area);
             _command.Parameters.AddWithValue("@demonym", country.Demonym);
             _command.Parameters.AddWithValue("@flagPath", country.FlagPath.AbsoluteUri);
+            _command.Parameters.AddWithValue("@flagPathIco", country.FlagPathIco.AbsoluteUri);
             _command.Parameters.AddWithValue("@alpha3Code", country.Alpha3Code);
             _command.Parameters.AddWithValue("@alpha2Code", country.Alpha2Code);
 
             try
             {
-                _command.CommandText = "INSERT INTO Countries(Name, Capital, Region, Subregion, Population, Gini, Area, Demonym, FlagPath, Alpha2Code, Alpha3Code)" +
-                    "values(@name, @capital, @region, @subregion, @population, @gini, @area, @demonym, @flagPath, @alpha2Code, @alpha3Code)";
+                _command.CommandText = "INSERT INTO Countries(Name, Capital, Region, Subregion, Population, Gini, Area, Demonym, FlagPath, FlagPathIco, Alpha2Code, Alpha3Code)" +
+                    "values(@name, @capital, @region, @subregion, @population, @gini, @area, @demonym, @flagPath, @flagPathIco, @alpha2Code, @alpha3Code)";
                 _command.Connection = _connection;
                 await Task.Run(() => _command.ExecuteNonQuery());
             }
@@ -290,17 +293,17 @@ namespace Countries.Service
             {
                 if(string.IsNullOrEmpty(currency.Name))
                 {
-                    currency.Name = "Not available";
+                    currency.Name = "ND";
                 }
 
                 if(string.IsNullOrEmpty(currency.Symbol))
                 {
-                    currency.Symbol = "Not available";
+                    currency.Symbol = "ND";
                 }
 
                 if(string.IsNullOrEmpty(currency.Code))
                 {
-                    currency.Code = "Not available";
+                    currency.Code = "ND";
                 }
 
                 try
@@ -613,7 +616,7 @@ namespace Countries.Service
             try
             {
                 _command.Parameters.AddWithValue("@alpha3Code", country.Alpha3Code);
-                _command.CommandText = $"SELECT Iso639_1, Iso639_1, Name, NativeName From language INNER JOIN CountryLanguage On language.Iso639_2=CountryLanguage.Iso639_2 where Alpha3Code=@alpha3Code";
+                _command.CommandText = $"SELECT Iso639_1, Iso639_2, Name, NativeName From language INNER JOIN CountryLanguage On language.Iso639_2=CountryLanguage.Iso639_2 where Alpha3Code=@alpha3Code";
                 _command.Connection = _connection;
                 //Lê cada registo
                 SQLiteDataReader readerLanguage = _command.ExecuteReader();
@@ -624,7 +627,7 @@ namespace Countries.Service
                         country.Languages.Add(new Language
                         {
                             Iso639_1 = (string)readerLanguage["Iso639_1"],
-                            Iso639_2 = (string)readerLanguage["Iso639_1"],
+                            Iso639_2 = (string)readerLanguage["Iso639_2"],
                             Name = (string)readerLanguage["Name"],
                             NativeName = (string)readerLanguage["NativeName"],
                         });
@@ -686,7 +689,7 @@ namespace Countries.Service
             List<Country> countries = new List<Country>();
             try
             {
-                _command.CommandText = "SELECT Name, Capital, Region, Subregion, Population, Demonym, Area, Gini, FlagPath, Alpha2Code, Alpha3Code From countries";
+                _command.CommandText = "SELECT Name, Capital, Region, Subregion, Population, Demonym, Area, Gini, FlagPath,FlagPathIco, Alpha2Code, Alpha3Code From countries";
                 _command.Connection = _connection;
                 //Lê cada registo
                 SQLiteDataReader reader = _command.ExecuteReader();
@@ -708,6 +711,7 @@ namespace Countries.Service
                             Area = (double)reader["Area"],
                             Gini = reader["Gini"].ToString(),
                             FlagPath = new Uri(reader["FlagPath"].ToString()),
+                            FlagPathIco = new Uri(reader["FlagPathIco"].ToString()),
                             Currencies = new List<Currency>(),
                             Languages = new List<Language>(),
                         });
@@ -733,6 +737,8 @@ namespace Countries.Service
 
         }
         #endregion Country
+
+
         #region Rates
         /// <summary>
         /// Save Data Rates
@@ -897,14 +903,14 @@ namespace Countries.Service
                 _connection.Close();
                 watch.Stop();
                 var elapsedMs = watch.ElapsedMilliseconds;
-                _dialogService.ShowMessage("Time Rates", elapsedMs.ToString());
+                _dialogService.ShowMessage("Time Covid19", elapsedMs.ToString());
             }
             catch(Exception e)
             {
 
                 _dialogService.ShowMessage("Erro", e.Message);
             }
-
+            
         }
         /// <summary>
         /// Creat all table to dbo InfoCovid19

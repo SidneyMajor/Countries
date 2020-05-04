@@ -148,7 +148,12 @@
   <ItemGroup>
     <Resource Include="Resource\glob.ico" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="exchange.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resource\exchange1.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

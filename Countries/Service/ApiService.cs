@@ -11,8 +11,9 @@ namespace Countries.Service
 
     public class ApiService
     {
-        public async Task<Response> GetCountries(string urlBase, string controller)
+        public async Task<Response> GetCountries(string urlBase, string controller, IProgress<ProgressReport> progress)
         {
+            ProgressReport report = new ProgressReport();
             try
             {
                 var client = new HttpClient
@@ -32,12 +33,16 @@ namespace Countries.Service
                     };
                 }
                 var getValues = JsonConvert.DeserializeObject<List<Country>>(result);
+
+                report.SaveCountries=getValues;
+                report.PercentComplet = (report.SaveCountries.Count * 100) / getValues.Count;
+                progress.Report(report);
+
                 return new Response
                 {
                     IsSuccess = true,
                     Result = getValues,
-                };
-
+                };                
 
             }
             catch(Exception ex)
@@ -51,8 +56,9 @@ namespace Countries.Service
             }
         }
 
-        public async Task<Response> GetDataCovid19(string urlBase, string controller)
+        public async Task<Response> GetDataCovid19(string urlBase, string controller, IProgress<ProgressReport> progress)
         {
+            ProgressReport report = new ProgressReport();
             try
             {
                 var client = new HttpClient
@@ -72,6 +78,11 @@ namespace Countries.Service
                     };
                 }
                 var getValues = JsonConvert.DeserializeObject<RootCovid>(result);
+
+                report.SaveInfoCovid = getValues.Countries;
+                report.PercentComplet = (report.SaveInfoCovid.Count * 100) / getValues.Countries.Count;
+                progress.Report(report);
+
                 return new Response
                 {
                     IsSuccess = true,
@@ -88,8 +99,9 @@ namespace Countries.Service
             }
         }
 
-        public async Task<Response> GetRates(string urlBase, string controller)
+        public async Task<Response> GetRates(string urlBase, string controller, IProgress<ProgressReport> progress)
         {
+            ProgressReport report = new ProgressReport();
             try
             {
                 var client = new HttpClient
@@ -111,6 +123,9 @@ namespace Countries.Service
 
 
                 var getValues = JsonConvert.DeserializeObject<List<Rate>>(result);
+                report.SaveRates = getValues;
+                report.PercentComplet = (report.SaveRates.Count * 100) / getValues.Count;
+                progress.Report(report);
                 return new Response
                 {
                     IsSuccess = true,
