@@ -11,6 +11,13 @@ namespace Countries.Service
 
     public class ApiService
     {
+        /// <summary>
+        /// Deserialize Object to Get Countries
+        /// </summary>
+        /// <param name="urlBase"></param>
+        /// <param name="controller"></param>
+        /// <param name="progress"></param>
+        /// <returns></returns>
         public async Task<Response> GetCountries(string urlBase, string controller, IProgress<ProgressReport> progress)
         {
             ProgressReport report = new ProgressReport();
@@ -55,7 +62,13 @@ namespace Countries.Service
                 };
             }
         }
-
+        /// <summary>
+        /// Deserialize Object to Get Covid19
+        /// </summary>
+        /// <param name="urlBase"></param>
+        /// <param name="controller"></param>
+        /// <param name="progress"></param>
+        /// <returns></returns>
         public async Task<Response> GetDataCovid19(string urlBase, string controller, IProgress<ProgressReport> progress)
         {
             ProgressReport report = new ProgressReport();
@@ -98,7 +111,13 @@ namespace Countries.Service
                 };
             }
         }
-
+        /// <summary>
+        /// Deserialize Object to Get Rates
+        /// </summary>
+        /// <param name="urlBase"></param>
+        /// <param name="controller"></param>
+        /// <param name="progress"></param>
+        /// <returns></returns>
         public async Task<Response> GetRates(string urlBase, string controller, IProgress<ProgressReport> progress)
         {
             ProgressReport report = new ProgressReport();

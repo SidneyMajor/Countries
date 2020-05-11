@@ -6,6 +6,10 @@ namespace Countries.Service
 
     public class NetworkService
     {
+        /// <summary>
+        /// Check Connection
+        /// </summary>
+        /// <returns></returns>
         public Response CheckConnection()
         {
             var client = new WebClient();

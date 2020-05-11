@@ -30,26 +30,81 @@ namespace Countries.Service
             {
                 Directory.CreateDirectory("Data");
             }
-            string path = @"Data\Coutries.sqlite";
-            //Country
-            _command.CommandText = "create table if not exists countries(" +
-                 "Name varchar(100)," +
-                 "Capital varchar(100)," +
-                 "Region varchar(100), " +
-                 "Subregion varchar(100), " +
-                 "Population int," +
-                 "Demonym varchar(100)," +
-                 "Area real," +
-                 "Gini real," +
-                 "FlagPath varchar(200)," +
-                 "FlagPathIco varchar(200)," +
-                 "Alpha2Code char(2)," +
-                 "Alpha3Code char(3) PRIMARY KEY)";
+            string path = @"Data\Countries.sqlite";
+
             try
             {
-
                 _connection = new SQLiteConnection("Data Source=" + path);
                 _connection.Open();
+                CreatALLTableCountry();
+            }
+            catch(Exception e)
+            {
+                _dialogService.ShowMessage("Erro", e.Message);
+            }
+
+        }
+
+        #region Country
+
+        public async Task CountryAnthemAsync(List<Country> countries, IProgress<ProgressReport> progress)
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            DirectoryInfo path = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
+            ProgressReport report = new ProgressReport();
+            if(!Directory.Exists(path + @"\Audio"))
+            {
+                Directory.CreateDirectory(path + @"\Audio");
+            }
+
+            using(var client = new WebClient())
+            {
+                foreach(Country country in countries)
+                {
+                    string fileName = path + @"\Audio" + $"\\{country.Alpha2Code}.mp3";
+                    if(!File.Exists(fileName))
+                    {
+                        try
+                        {
+                            await client.DownloadFileTaskAsync($"http://www.nationalanthems.info/{country.Alpha2Code.ToLower()}.mp3", fileName);
+                        }
+                        catch(Exception )
+                        {
+                            continue;
+                           
+                        }
+                    }
+                    country.AnthemPath = new Uri(fileName);
+                    report.SaveCountries.Add(country);
+                    report.PercentComplet = (report.SaveCountries.Count * 100) / countries.Count;
+                    progress.Report(report);
+                }
+            }
+            watch.Stop();
+            var elapsedMs = watch.ElapsedMilliseconds;
+            _dialogService.ShowMessage("Time Save Audio", elapsedMs.ToString());
+        }
+        /// <summary>
+        /// Creat all table to dbo Countries
+        /// </summary>
+        private void CreatALLTableCountry()
+        {
+            try
+            {
+                //Country
+                _command.CommandText = "create table if not exists countries(" +
+                     "Name varchar(100)," +
+                     "Capital varchar(100)," +
+                     "Region varchar(100), " +
+                     "Subregion varchar(100), " +
+                     "Population int," +
+                     "Demonym varchar(100)," +
+                     "Area real," +
+                     "Gini real," +
+                     "FlagPath varchar(200)," +
+                     "FlagPathIco varchar(200)," +
+                     "Alpha2Code char(2)," +
+                     "Alpha3Code char(3) PRIMARY KEY)";
 
                 _command.Connection = _connection;
                 _command.ExecuteNonQuery();
@@ -79,10 +134,10 @@ namespace Countries.Service
                 _command.ExecuteNonQuery();
                 //CountryLanguage
                 _command.CommandText = "create table if not exists countryLanguage(" +
-               "Iso639_2 char(3)," +
+               "CodeLanguage char(3)," +
                "Alpha3Code char(3)," +
-               "PRIMARY KEY (Alpha3Code, Iso639_2)," +
-               "FOREIGN KEY (Iso639_2) REFERENCES Language(Iso639_2)," +
+               "PRIMARY KEY (Alpha3Code, CodeLanguage)," +
+               "FOREIGN KEY (CodeLanguage) REFERENCES Language(Iso639_2)," +
                "FOREIGN KEY (Alpha3Code) REFERENCES countries(Alpha3Code))";
                 _command.Connection = _connection;
                 _command.ExecuteNonQuery();
@@ -102,16 +157,13 @@ namespace Countries.Service
                "FOREIGN KEY (TranslationCode) REFERENCES countries(Alpha3Code))";
                 _command.Connection = _connection;
                 _command.ExecuteNonQuery();
-
             }
             catch(Exception e)
             {
+
                 _dialogService.ShowMessage("Erro", e.Message);
             }
-
         }
-
-        #region Country
         /// <summary>
         /// Dawload and corvert image svg to jpg
         /// </summary>
@@ -143,15 +195,15 @@ namespace Countries.Service
                     }
                     //Image for to TreeView..
                     string fileNameIco = path + @"\Photos\PhotosIco" + $"\\{flagPath.Name}.png";
-                   
-                    
+
+
                     if(!File.Exists(path + @"\Photos" + $"\\{flagPath.Name}.jpg"))
                     {
                         try
                         {
                             if(!File.Exists(fileNameIco))
                             {
-                               await Task.Run(()=> client.DownloadFile(new Uri("https://www.countryflags.io/" + $"{flagPath.Alpha2Code}" + "/shiny/64.png"), $"{fileNameIco}"));
+                                await Task.Run(() => client.DownloadFile(new Uri("https://www.countryflags.io/" + $"{flagPath.Alpha2Code}" + "/shiny/64.png"), $"{fileNameIco}"));
                             }
                             string fileName = path + @"\Photos" + $"\\{flagPath.Name}.svg";
                             //string fileNameIco = path + @"\Photos\PhotosIco" + $"\\{flagPath.Name}.png";
@@ -162,7 +214,7 @@ namespace Countries.Service
                             htmlToImageConverter.Width = Convert.ToInt32(svgDocument.Width);
 
                             htmlToImageConverter.GenerateImageFromFile(fileName, "jpg", path + @"\Photos" + $"\\{flagPath.Name}.jpg");
-                           
+
                             //Bitmap bitmap = svgDocument.Draw(htmlToImageConverter.ToolPath);
                             //Bitmap bitmap = new Bitmap(htmlToImageConverter.ToolPath);
                             //bitmap.Save(path + @"\Photos" + $"\\{flagPath.Name}.jpg", ImageFormat.Jpeg);
@@ -193,10 +245,18 @@ namespace Countries.Service
         /// <param name="getpath"></param>
         private void DeleteImageSvg(string getpath)
         {
-            if(File.Exists(getpath))
+            try
+            {
+                if(File.Exists(getpath))
+                {
+
+                    File.Delete(getpath);
+                }
+            }
+            catch(Exception e)
             {
 
-                File.Delete(getpath);
+                _dialogService.ShowMessage("Erro", e.Message);
             }
         }
         /// <summary>
@@ -372,7 +432,7 @@ namespace Countries.Service
                     //CountryLanguage
                     _command.Parameters.AddWithValue("@iso639_2", language.Iso639_2);
                     _command.Parameters.AddWithValue("@alpha3Code", country.Alpha3Code);
-                    _command.CommandText = "INSERT INTO countryLanguage(Iso639_2, Alpha3Code)" +
+                    _command.CommandText = "INSERT INTO countryLanguage(CodeLanguage, Alpha3Code)" +
                      "values(@iso639_2, @alpha3Code)";
                     _command.Connection = _connection;
                     await Task.Run(() => _command.ExecuteNonQuery());
@@ -437,45 +497,22 @@ namespace Countries.Service
         private void CheckDataCountry(Country country)
         {
             if(country.Name.Contains("'"))
-            {
                 country.Name = country.Name.Replace("'", " ");
-            }
-
             if(country.Capital.Contains("'"))
-            {
                 country.Capital = country.Capital.Replace("'", " ");
-            }
-
             if(string.IsNullOrEmpty(country.Capital))
-            {
                 country.Capital = "Not available";
-            }
-
             if(string.IsNullOrEmpty(country.Region))
-            {
                 country.Region = "Not available";
-            }
-
             if(string.IsNullOrEmpty(country.Subregion))
-            {
                 country.Subregion = "Not available";
-            }
-
             if(country.Gini == null || string.IsNullOrEmpty(country.Gini))
-            {
                 country.Gini = "Not available";
-            }
-
             country.Area = country.Area.GetValueOrDefault();
             if(country.Demonym.Contains("'"))
-            {
                 country.Demonym = country.Name.Replace("'", " ");
-            }
-
             if(string.IsNullOrEmpty(country.Demonym))
-            {
                 country.Demonym = "Not available";
-            }
         }
         /// <summary>
         /// Check Data Translations
@@ -484,54 +521,25 @@ namespace Countries.Service
         private void CheckDataTranslations(Translations translations)
         {
             if(string.IsNullOrEmpty(translations.De))
-            {
                 translations.De = "Not available";
-            }
-
             if(string.IsNullOrEmpty(translations.Es))
-            {
                 translations.Es = "Not available";
-            }
-
             if(string.IsNullOrEmpty(translations.Fr))
-            {
                 translations.Fr = "Not available";
-            }
-
             if(string.IsNullOrEmpty(translations.It))
-            {
                 translations.It = "Not available";
-            }
-
             if(string.IsNullOrEmpty(translations.Ja))
-            {
                 translations.Ja = "Not available";
-            }
-
             if(string.IsNullOrEmpty(translations.Br))
-            {
                 translations.Br = "Not available";
-            }
-
             if(string.IsNullOrEmpty(translations.Pt))
-            {
                 translations.Pt = "Not available";
-            }
-
             if(string.IsNullOrEmpty(translations.Hr))
-            {
                 translations.Hr = "Not available";
-            }
-
             if(string.IsNullOrEmpty(translations.Nl))
-            {
                 translations.Nl = "Not available";
-            }
-
             if(string.IsNullOrEmpty(translations.Fa))
-            {
                 translations.Fa = "Not available";
-            }
         }
         /// <summary>
         /// Delete Data in DBO Countries
@@ -616,7 +624,7 @@ namespace Countries.Service
             try
             {
                 _command.Parameters.AddWithValue("@alpha3Code", country.Alpha3Code);
-                _command.CommandText = $"SELECT Iso639_1, Iso639_2, Name, NativeName From language INNER JOIN CountryLanguage On language.Iso639_2=CountryLanguage.Iso639_2 where Alpha3Code=@alpha3Code";
+                _command.CommandText = $"SELECT Iso639_1, Iso639_2, Name, NativeName From language INNER JOIN CountryLanguage On language.Iso639_2=CountryLanguage.CodeLanguage where Alpha3Code=@alpha3Code";
                 _command.Connection = _connection;
                 //Lê cada registo
                 SQLiteDataReader readerLanguage = _command.ExecuteReader();
@@ -872,7 +880,7 @@ namespace Countries.Service
             var watch = System.Diagnostics.Stopwatch.StartNew();
             string pathCovid = @"Data\InfoCovid19.sqlite";
             string sql = "create table if not exists InfoCovid(Date varchar(15) Primary Key)";
-            List<string> countrycode = new List<string>();
+            // List<string> countrycode = new List<string>();
             try
             {
                 _connection = new SQLiteConnection("Data Source=" + pathCovid);
@@ -895,7 +903,7 @@ namespace Countries.Service
                 //Insert row to InfoCovidCountry
                 foreach(CovidCountry covid in rootCovid.Countries)
                 {
-                    await InsertCovidCountryAsync(covid, countrycode);
+                    await InsertCovidCountryAsync(covid);
                     report.SaveInfoCovid.Add(covid);
                     report.PercentComplet = (report.SaveInfoCovid.Count * 100) / rootCovid.Countries.Count();
                     progress.Report(report);
@@ -910,48 +918,55 @@ namespace Countries.Service
 
                 _dialogService.ShowMessage("Erro", e.Message);
             }
-            
+
         }
         /// <summary>
         /// Creat all table to dbo InfoCovid19
         /// </summary>
         private void CreatTableCovid19()
         {
-            //Creat Table InfoCovideGlobal
-            _command.CommandText = "create table if not exists InfoCovidGlobal(" +
-                "infoDateGlobal varchar(15)," +
-                "NewConfirmed int," +
-                "TotalConfirmed int," +
-                "NewDeaths int," +
-                "TotalDeaths int," +
-                "NewRecovered int," +
-                "TotalRecovered int," +
-                "FOREIGN KEY (infoDateGlobal) REFERENCES InfoCovid(Date))";
-            _command.Connection = _connection;
-            _command.ExecuteNonQuery();
-            //Creat Table InfoCovideCountry
-            _command.CommandText = "create table if not exists InfoCovidCountry(" +
-                "infoDate varchar(15)," +
-                "NewConfirmed int," +
-                "TotalConfirmed int," +
-                "NewDeaths int," +
-                "TotalDeaths int," +
-                "NewRecovered int," +
-                "TotalRecovered int," +
-                "Country varchar(100)," +
-                "CountryCode char(2) Primary Key," +
-                "Slug varchar(100))";
-            _command.Connection = _connection;
-            _command.ExecuteNonQuery();
-            //Creat Table InfoCovideCountryRootCovid
-            _command.CommandText = "create table if not exists InfoCovidCountryRootCovid(" +
-                "infoDateCountry varchar(15)," +
-                "InfoCountryCode char(2)," +
-                "PRIMARY KEY (infoDateCountry, InfoCountryCode)," +
-                "FOREIGN KEY (infoDateCountry) REFERENCES InfoCovid(Date)," +
-                "FOREIGN KEY (InfoCountryCode) REFERENCES InfoCovidCountry(CountryCode))";
-            _command.Connection = _connection;
-            _command.ExecuteNonQuery();
+            try
+            {
+                //Creat Table InfoCovideGlobal
+                _command.CommandText = "create table if not exists InfoCovidGlobal(" +
+                    "NewConfirmed int," +
+                    "TotalConfirmed int," +
+                    "NewDeaths int," +
+                    "TotalDeaths int," +
+                    "NewRecovered int," +
+                    "TotalRecovered int" +
+                    ")";
+                _command.Connection = _connection;
+                _command.ExecuteNonQuery();
+                //Creat Table InfoCovideCountry
+                _command.CommandText = "create table if not exists InfoCovidCountry(" +
+                    "infoDate varchar(15)," +
+                    "NewConfirmed int," +
+                    "TotalConfirmed int," +
+                    "NewDeaths int," +
+                    "TotalDeaths int," +
+                    "NewRecovered int," +
+                    "TotalRecovered int," +
+                    "Country varchar(100)," +
+                    "CountryCode char(2) Primary Key," +
+                    "Slug varchar(100))";
+                _command.Connection = _connection;
+                _command.ExecuteNonQuery();
+                ////Creat Table InfoCovideCountryRootCovid
+                //_command.CommandText = "create table if not exists InfoCovidCountryRootCovid(" +
+                //    "infoDateCountry varchar(15)," +
+                //    "InfoCountryCode char(2)," +
+                //    "PRIMARY KEY (infoDateCountry, InfoCountryCode)," +
+                //    "FOREIGN KEY (infoDateCountry) REFERENCES InfoCovid(Date)," +
+                //    "FOREIGN KEY (InfoCountryCode) REFERENCES InfoCovidCountry(CountryCode))";
+                //_command.Connection = _connection;
+                //_command.ExecuteNonQuery();
+            }
+            catch(Exception e)
+            {
+
+                _dialogService.ShowMessage("Erro", e.Message);
+            }
         }
         /// <summary>
         /// Insert row to InfoCovidGlobal
@@ -960,18 +975,26 @@ namespace Countries.Service
         /// <returns></returns>
         private async Task InsertGlobalAsync(RootCovid rootCovid)
         {
-            //Insert row to InfoCovidGlobal
-            _command.Parameters.AddWithValue("@infoDate", rootCovid.Date);
-            _command.Parameters.AddWithValue("@newConfirmed", rootCovid.Global.NewConfirmed);
-            _command.Parameters.AddWithValue("@totalConfirmed", rootCovid.Global.TotalConfirmed);
-            _command.Parameters.AddWithValue("@newDeaths", rootCovid.Global.NewDeaths);
-            _command.Parameters.AddWithValue("@totalDeaths", rootCovid.Global.TotalDeaths);
-            _command.Parameters.AddWithValue("@newRecovered", rootCovid.Global.NewRecovered);
-            _command.Parameters.AddWithValue("@totalRecovered", rootCovid.Global.TotalRecovered);
-            _command.CommandText = "INSERT INTO InfoCovidGlobal(infoDateGlobal, NewConfirmed, TotalConfirmed, NewDeaths, TotalDeaths, NewRecovered, TotalRecovered)" +
-                "values(@infoDate, @newConfirmed, @totalConfirmed, @newDeaths, @totalDeaths, @newRecovered, @totalRecovered)";
-            _command.Connection = _connection;
-            await Task.Run(() => _command.ExecuteNonQuery());
+            try
+            {
+                //Insert row to InfoCovidGlobal
+                // _command.Parameters.AddWithValue("@infoDate", rootCovid.Date);
+                _command.Parameters.AddWithValue("@newConfirmed", rootCovid.Global.NewConfirmed);
+                _command.Parameters.AddWithValue("@totalConfirmed", rootCovid.Global.TotalConfirmed);
+                _command.Parameters.AddWithValue("@newDeaths", rootCovid.Global.NewDeaths);
+                _command.Parameters.AddWithValue("@totalDeaths", rootCovid.Global.TotalDeaths);
+                _command.Parameters.AddWithValue("@newRecovered", rootCovid.Global.NewRecovered);
+                _command.Parameters.AddWithValue("@totalRecovered", rootCovid.Global.TotalRecovered);
+                _command.CommandText = "INSERT INTO InfoCovidGlobal(NewConfirmed, TotalConfirmed, NewDeaths, TotalDeaths, NewRecovered, TotalRecovered)" +
+                    "values(@newConfirmed, @totalConfirmed, @newDeaths, @totalDeaths, @newRecovered, @totalRecovered)";
+                _command.Connection = _connection;
+                await Task.Run(() => _command.ExecuteNonQuery());
+            }
+            catch(Exception e)
+            {
+
+                _dialogService.ShowMessage("Erro", e.Message);
+            }
         }
         /// <summary>
         /// Insert row to covid InfoCovidCountry
@@ -979,16 +1002,16 @@ namespace Countries.Service
         /// <param name="covid"></param>
         /// <param name="countrycode"></param>
         /// <returns></returns>
-        private async Task InsertCovidCountryAsync(CovidCountry covid, List<string> countrycode)
+        private async Task InsertCovidCountryAsync(CovidCountry covid)
         {
-            //Insert row to InfoCovideCountryRootCovid
-            _command.Parameters.AddWithValue("@infoDate", covid.Date);
-            _command.Parameters.AddWithValue("@infoCountryCode", covid.CountryCode);
-            _command.CommandText = "INSERT INTO InfoCovidCountryRootCovid(infoDateCountry, InfoCountryCode) values(@infoDate, @infoCountryCode)";
-            _command.Connection = _connection;
-            await Task.Run(() => _command.ExecuteNonQuery());
+            ////Insert row to InfoCovideCountryRootCovid
+            //_command.Parameters.AddWithValue("@infoDate", covid.Date);
+            //_command.Parameters.AddWithValue("@infoCountryCode", covid.CountryCode);
+            //_command.CommandText = "INSERT INTO InfoCovidCountryRootCovid(infoDateCountry, InfoCountryCode) values(@infoDate, @infoCountryCode)";
+            //_command.Connection = _connection;
+            //await Task.Run(() => _command.ExecuteNonQuery());
 
-            if(!countrycode.Contains(covid.CountryCode))
+            try
             {
                 //Insert row to covid InfoCovidCountry
                 _command.Parameters.AddWithValue("@infoDate", covid.Date);
@@ -1005,8 +1028,14 @@ namespace Countries.Service
                     "values(@infoDate, @newConfirmed, @totalConfirmed, @newDeaths, @totalDeaths, @newRecovered, @totalRecovered, @country, @countryCode, @slug)";
                 _command.Connection = _connection;
                 await Task.Run(() => _command.ExecuteNonQuery());
-                countrycode.Add(covid.CountryCode);
+                //countrycode.Add(covid.CountryCode);
             }
+            catch(Exception e)
+            {
+
+                _dialogService.ShowMessage("Erro", e.Message);
+            }
+
 
         }
         /// <summary>
@@ -1063,8 +1092,7 @@ namespace Countries.Service
             try
             {
                 _command.Parameters.AddWithValue("@date", global.Date);
-                _command.CommandText = $"SELECT NewConfirmed, TotalConfirmed, NewDeaths, TotalDeaths, NewRecovered, TotalRecovered From InfoCovidGlobal " +
-                    $"INNER JOIN InfoCovid On InfoCovidGlobal.infoDateGlobal=InfoCovid.Date where infoDateGlobal=@date";
+                _command.CommandText = $"SELECT NewConfirmed, TotalConfirmed, NewDeaths, TotalDeaths, NewRecovered, TotalRecovered From InfoCovidGlobal ";
                 _command.Connection = _connection;
                 //Lê cada registo
                 SQLiteDataReader readerGlobal = _command.ExecuteReader();
@@ -1101,8 +1129,7 @@ namespace Countries.Service
             {
 
                 _command.Parameters.AddWithValue("@date", country.Date);
-                _command.CommandText = $"SELECT infoDate, NewConfirmed, TotalConfirmed, NewDeaths, TotalDeaths, NewRecovered, TotalRecovered, Country, CountryCode, Slug From InfoCovidCountry " +
-                    $"INNER JOIN InfoCovidCountryRootCovid On InfoCovidCountry.CountryCode=InfoCovidCountryRootCovid.InfoCountryCode";
+                _command.CommandText = $"SELECT infoDate, NewConfirmed, TotalConfirmed, NewDeaths, TotalDeaths, NewRecovered, TotalRecovered, Country, CountryCode, Slug From InfoCovidCountry";
                 _command.Connection = _connection;
                 //Lê cada registo
                 SQLiteDataReader readerCountry = _command.ExecuteReader();
@@ -1152,9 +1179,9 @@ namespace Countries.Service
                 _command.Connection = _connection;
                 await Task.Run(() => _command.ExecuteNonQuery());
 
-                _command.CommandText = "delete from InfoCovidCountryRootCovid";
-                _command.Connection = _connection;
-                await Task.Run(() => _command.ExecuteNonQuery());
+                //_command.CommandText = "delete from InfoCovidCountryRootCovid";
+                //_command.Connection = _connection;
+                //await Task.Run(() => _command.ExecuteNonQuery());
 
             }
             catch(Exception e)

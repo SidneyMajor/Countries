@@ -8,7 +8,7 @@
 
         public override string ToString()
         {
-            return $"{Code}-{Name}- ( {Symbol} )";
+            return $"{Code}\n{Name}- ( {Symbol} )";
         }
     }
 }

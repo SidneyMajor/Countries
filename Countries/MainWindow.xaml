@@ -2,145 +2,223 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"        
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         xmlns:local="clr-namespace:Countries"
         xmlns:self="clr-namespace:Countries.Models"
         Loaded="Window_Loaded"
         mc:Ignorable="d"  
         Icon="/Resource/glob.ico"
-        Title="Country" Height="600" Width="1000" Background="Silver" WindowStartupLocation="CenterScreen" MinWidth="800" MinHeight="600" ResizeMode="NoResize" >
+        Title="Country Info" Height="748" Width="1102.667" Background="Silver" WindowStartupLocation="CenterScreen" MinWidth="800" MinHeight="600" ResizeMode="NoResize" >
 
-    <Grid >
+    <Grid Margin="0 0" >
+
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="259*"/>
-            <ColumnDefinition Width="120*"/>
-            <ColumnDefinition Width="399*"/>
-            <ColumnDefinition Width="216*"/>
+            <ColumnDefinition Width="279*"/>
+            <ColumnDefinition Width="433*"/>
+
+            <ColumnDefinition Width="385*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
 
-            <RowDefinition Height="244*"/>
-            <RowDefinition Height="327*"/>
+            <RowDefinition Height="49*"/>
+            <RowDefinition Height="328*"/>
+            <RowDefinition Height="343*"/>
 
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="5,0,8,175">
-            <TextBlock Text="Region" Margin="0 0" FontSize="40" Width="227" ><InlineUIContainer>
+        <Image gif:ImageBehavior.AnimatedSource="/Resource/giphy.gif"  Stretch="Fill" Margin="284,0,284,215.333" Grid.Row="1" x:Name="InitImage" Grid.ColumnSpan="2" Grid.RowSpan="2" Grid.Column="1" Width="250" Height="250" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Visibility="Visible"/>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,1.333,50.333,247.667">
+            <TextBlock Text="Region" Margin="0,0,0,-0.333" FontSize="40" Width="235" ><InlineUIContainer>
                     <Image Source="/Resource/glob.ico" Width="60"  Margin="0 0 0 -15" />
                 </InlineUIContainer></TextBlock>
         </StackPanel>
 
-        <Image x:Name="ImageCountry" Source="{Binding FlagPath}" Height="197" Margin="258.667,37,9.667,0" Stretch="Fill"  MaxWidth="250" MaxHeight="201" VerticalAlignment="Top" Grid.Column="2" Grid.ColumnSpan="2" />
-        <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,64,8.333,20.333" Grid.RowSpan="2">
-            <TreeView  x:Name="TreeViewCountries" FontFamily="Perpetua" FontWeight="Bold" Background="Transparent" BorderThickness="0" Width="251" SelectedItemChanged="TreeViewCountries_SelectedItemChanged" Margin="0 0" >
-                <!--<TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate  DataType="{x:Type ListViewItem}" ItemsSource="{Binding ItemsTreeView}" >
-                        <Button x:Name="BtnSelectedCountry" Background="Silver" BorderThickness="0"  Click="BtnSelectedCountry_Click" >
-                            <StackPanel Orientation="Horizontal" >
-                                <TextBlock Text="{Binding Title}" FontSize="30" />
-                                <Image Source="{Binding FlagPath}" Width="25" Height="25"/>
-                                <TextBlock Text="{Binding Name}" Margin="5" FontSize="20"/>
-                            </StackPanel>
-                        </Button>
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>-->
+        <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,55.333,432,20.333" Grid.RowSpan="2" Grid.Row="1" Grid.ColumnSpan="2">
+            <TreeView  x:Name="TreeViewCountries" FontFamily="Perpetua" FontWeight="Bold" Background="Transparent" BorderThickness="0" Width="278" SelectedItemChanged="TreeViewCountries_SelectedItemChanged" Margin="0,10,0,0" IsTextSearchEnabled="True" >
 
                 <TreeView.Resources>
                     <HierarchicalDataTemplate DataType="{x:Type self:Continent}" ItemsSource="{Binding CountriesList}" >
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{Binding Name}" FontSize="30"/>
-                            <TextBlock Text=" [" Foreground="Blue" />
-                            <TextBlock Text="{Binding CountriesList.Count}" Foreground="Blue" />
-                            <TextBlock Text="]" Foreground="Blue" />
+                            <TextBlock Text="{Binding CountriesList.Count, StringFormat=[\{0\}]}" Foreground="DarkBlue" />
                         </StackPanel>
                     </HierarchicalDataTemplate>
                     <DataTemplate DataType="{x:Type self:Country}">
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{Binding FlagPathIco}" Width="25" Height="25" Margin="0,0,5,0" />
                             <TextBlock Text="{Binding Name}" Margin="0,0,5,0" VerticalAlignment="Center" FontSize="20"/>
-                            <TextBlock Text="{Binding Capital,StringFormat=({0})}" Foreground="Green" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Capital, StringFormat=(\{0\})}" Foreground="Blue" VerticalAlignment="Center" FontSize="14"/>
                         </StackPanel>
                     </DataTemplate>
                 </TreeView.Resources>
 
+                <!--Fica mais lento se tiver expanded-->
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="{x:Type TreeViewItem}" >
+                        <Setter  Value="True" Property="IsExpanded"/>
+                    </Style>
+                </TreeView.ItemContainerStyle>
 
             </TreeView>
         </StackPanel>
 
-        <Label x:Name="LabelStatus" Content="Status"  Width="455" Margin="0,0,9.667,20.333" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="1" FontSize="14" FontWeight="Bold" Height="auto" Grid.ColumnSpan="2" Grid.Column="2"/>
-        <ProgressBar x:Name="ProgressBarLoad" Margin="0,0,0.667,0.333" Grid.Row="1" Height="20" VerticalAlignment="Bottom" Grid.ColumnSpan="4"/>
+        <Label x:Name="LabelStatus" Content="Status"  Width="459" Margin="0,0,8.333,20.333" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="2" FontSize="14" FontWeight="Bold" Height="29" Grid.ColumnSpan="2" Grid.Column="1"/>
+        <ProgressBar x:Name="ProgressBarLoad" Margin="0,0,-0.667,0.333" Grid.Row="2" Height="20" VerticalAlignment="Bottom" Grid.ColumnSpan="3"/>
 
-        <StackPanel Orientation="Vertical" Margin="0.667,3,-0.333,43.333" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"  Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" >
-            <TabControl Height="269"  Margin="0,10,0,0"  >
+        <StackPanel Orientation="Vertical" Margin="0.667,10.333,-1.667,43.333" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"  Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" >
+            <TabControl Height="269"  Margin="0,10,0.333,0" x:Name="TabControl" Visibility="Visible" >
                 <TabItem Header="Language">
-                    <Grid Background="White" Margin="0 0">
+                    <Grid Background="White" Margin="0 0" RenderTransformOrigin="0.6,0.463">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150*"/>
                             <ColumnDefinition Width="300*"/>
                             <ColumnDefinition Width="300*"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal" Margin="0 10" Grid.ColumnSpan="3">
-                            <ListBox x:Name="listBoxLanguage" HorizontalAlignment="Left" Width="auto" Background="#FFE9B8B8" FontSize="14" FontWeight="Black" Margin="0,10"/>
+                        <StackPanel Orientation="Horizontal" Margin="0 0" >
+                            <ListBox x:Name="listBoxLanguage" HorizontalAlignment="Left" Width="143" Background="WhiteSmoke" FontSize="14" FontWeight="Black" Margin="0,0,0,-0.333" ScrollViewer.HorizontalScrollBarVisibility="Visible" ScrollViewer.VerticalScrollBarVisibility="Visible" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1" HorizontalAlignment="Left" Height="auto" Margin="10 35" VerticalAlignment="Top" Width="auto">
-                            <TextBlock x:Name="TextBlockTranslation" HorizontalAlignment="Left"  TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="auto" Width="auto" FontSize="18"/>
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Left" Height="auto" Margin="5 35" VerticalAlignment="Top" Width="auto">
+                            <TextBlock x:Name="TextBlockTranslation2" HorizontalAlignment="Center" Text="TextBlock" Height="auto" Width="auto" FontSize="12" ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2" HorizontalAlignment="Left" Height="auto" Margin="0 35" VerticalAlignment="Top" Width="auto">
-                            <TextBlock x:Name="TextBlockTranslation2"  HorizontalAlignment="Left" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Height="auto" Width="auto" FontSize="18"/>
+                            <TextBlock x:Name="TextBlockTranslation" HorizontalAlignment="Left"  Text="TextBlock" Height="auto" Width="auto" FontSize="12" ScrollViewer.HorizontalScrollBarVisibility="Auto" />
                         </StackPanel>
                         <StackPanel HorizontalAlignment="Left" Height="29" Margin="0 0" VerticalAlignment="Top" Width="563" Grid.ColumnSpan="2" Grid.Column="1">
                             <TextBlock Text="Translation" FontSize="20" FontWeight="Black" Height="29" HorizontalAlignment="Center"/>
                         </StackPanel>
+                        <Border BorderBrush="Snow" BorderThickness="2" HorizontalAlignment="Left" Height="8" Margin="143,27,-0.333,0" VerticalAlignment="Top" Width="662" Grid.ColumnSpan="3" Background="Silver"/>
 
                     </Grid>
                 </TabItem>
                 <TabItem Header="Currency">
-                    <Grid Background="White" Margin="0,0,0,-0.333" Height="241" VerticalAlignment="Top">
+                    <Grid Background="White" Margin="0,0,0,-0.333" Height="241" VerticalAlignment="Top" RenderTransformOrigin="0.709,0.501">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="59*"/>
                             <RowDefinition Height="98*"/>
                             <RowDefinition Height="84*"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="83*"/>
-                            <ColumnDefinition Width="99*"/>
+                            <ColumnDefinition Width="313*"/>
+                            <ColumnDefinition Width="415*"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2" Grid.RowSpan="3" Margin="0,0,0,-0.667">
-                            <ListBox x:Name="listBoxCurrency" HorizontalAlignment="Left" Margin="0,10,0,-0.333" Width="auto" Background="#FFC75454" FontSize="14" FontWeight="Black"/>
+                        <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2" Grid.RowSpan="3" Margin="0 0">
+                            <ListBox x:Name="listBoxCurrency" HorizontalAlignment="Left" Width="auto" Background="WhiteSmoke" FontSize="12" FontWeight="Black"/>
                         </StackPanel>
-                        <Label Content="Currency Converter" Grid.Column="1" Grid.Row="0" BorderThickness="3" Background="Coral" BorderBrush="Black" Margin="3,0,-3,9.333" FontSize="18" FontWeight="ExtraBold" HorizontalContentAlignment="Center"/>
-                        <StackPanel Orientation="Horizontal" Margin="3,0.667,10,83.333" Grid.RowSpan="2" Grid.Row="1" Grid.Column="1">
-                            <ComboBox x:Name="ComboBoxInput"  Width="151" Margin="0,29" Height="40" Grid.Row="2"/>
-                            <ComboBox x:Name="ComboBoxOutput" Width="157" Margin="65,29" Height="40"/>
-
+                        <Label Content="Currency Converter" Grid.Column="1" Grid.Row="0" Margin="104.667,6,116,14.333" FontSize="18" FontWeight="ExtraBold" HorizontalAlignment="Center" Width="194"/>
+                        <Border BorderBrush="Snow" BorderThickness="2" HorizontalAlignment="Left" Height="8" Margin="310,45,0,0" VerticalAlignment="Top" Width="485" Background="Silver" Grid.ColumnSpan="2"/>
+                        <StackPanel Orientation="Horizontal" Margin="2,0.667,48.333,83.333" Grid.RowSpan="2" Grid.Row="1" Grid.Column="1">
+                            <ComboBox x:Name="ComboBoxInput"  Width="176" Margin="0,45,0,30" Grid.Row="2" SelectedIndex="0" IsSynchronizedWithCurrentItem="True"/>
+                            <ComboBox x:Name="ComboBoxOutput" Width="188" Margin="25,45,65,30" SelectedIndex="0" IsSynchronizedWithCurrentItem="True"/>
                         </StackPanel>
-                        <TextBox x:Name="TextBoxInput" Grid.Column="1" HorizontalAlignment="Left" Height="44" Margin="3,29.667,0,0" Grid.Row="2" TextWrapping="Wrap"  VerticalAlignment="Top" Width="152" VerticalContentAlignment="Center" FontFamily="Arial Black" TextChanged="TextBoxInput_TextChanged"/>
-                        <TextBox x:Name="TextBoxOutput" Grid.Column="1" HorizontalAlignment="Left" Height="44" Margin="228,29.667,0,0" Grid.Row="2" TextWrapping="Wrap"  VerticalAlignment="Top" Width="158" VerticalContentAlignment="Center" FontFamily="Arial Black"/>
-                        <Button x:Name="btnSwitchCurrency" Grid.Column="1" HorizontalAlignment="Left" Margin="160,29.667,0,0" Grid.Row="2" VerticalAlignment="Top" Width="63" Height="44" Background="Silver" Click="btnSwitchCurrency_Click">
+                        <TextBox x:Name="TextBoxInput" Grid.Column="1" HorizontalAlignment="Left" Height="44" Margin="8,29.667,0,0" Grid.Row="2" TextWrapping="Wrap"  VerticalAlignment="Top" Width="152" VerticalContentAlignment="Center" FontFamily="Arial Black" TextChanged="TextBoxInput_TextChanged"/>
+                        <TextBox x:Name="TextBoxOutput" Grid.Column="1" HorizontalAlignment="Left" Height="44" Margin="233,29.667,0,0" Grid.Row="2" TextWrapping="Wrap"  VerticalAlignment="Top" Width="158" VerticalContentAlignment="Center" FontFamily="Arial Black" IsReadOnly="True"/>
+                        <Button x:Name="btnSwitchCurrency" Grid.Column="1" HorizontalAlignment="Left" Margin="165,29.667,0,0" Grid.Row="2" VerticalAlignment="Top" Width="63" Height="44" Background="Silver" Click="btnSwitchCurrency_Click">
                             <Image Source="/Resource/exchange1.png" Stretch="Fill"/>
                         </Button>
+                        <Label Grid.Column="1" HorizontalAlignment="Left" Margin="269.667,9.667,0,0" Grid.Row="2" VerticalAlignment="Top" Height="10" Width="10"/>
+                        <Label Content="Currency from this Country" Grid.Column="1" HorizontalAlignment="Left" Margin="210,9.667,0,0" Grid.Row="1" VerticalAlignment="Top" Width="201" FontSize="14" FontFamily="Arial" FontWeight="Bold" HorizontalContentAlignment="Left" Height="26"/>
+                        <Label Content="Choose a Currency " Grid.Column="1" HorizontalAlignment="Left" Margin="15,9.667,0,0" Grid.Row="1" VerticalAlignment="Top" RenderTransformOrigin="0.474,1.154" Width="145" FontSize="14" FontFamily="Arial" FontWeight="Bold" HorizontalContentAlignment="Left" Height="26"/>
                     </Grid>
                 </TabItem>
                 <TabItem Header="Covid19 Info">
                     <Grid Background="White" Margin="0 0">
-                        <StackPanel Grid.Column="3" HorizontalAlignment="Left" Height="202" Margin="1.667,33,0,0" VerticalAlignment="Top" Width="204" Grid.RowSpan="2">
-                            <TextBlock x:Name="TextBlockCovid" Text="Current Info Covid19" Margin="0,0,9,0" Foreground="DarkRed" FontSize="18" FontWeight="Black" RenderTransformOrigin="0.5,0.5" Height="40"/>
-                            <TextBlock x:Name="InfoCovid" Text="TextBlock" Margin="0,0,9,0" FontSize="16" FontWeight="Black"  RenderTransformOrigin="0.5,0.5" Height="136"/>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="406*"/>
+                            <ColumnDefinition Width="406*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel HorizontalAlignment="Left" Height="166" Margin="15,65,0,0" VerticalAlignment="Top" Width="382" Grid.Column="0">
+                            <TextBlock x:Name="TextCountryInfoCovid" Text="TextBlock" Margin="10,0" FontSize="30" FontWeight="Black"   Height="158" HorizontalAlignment="Center" Width="362"/>
+                        </StackPanel>
+                        <TextBlock  Text="Current Country Info" Margin="82,5,30,194" Foreground="DarkRed" FontSize="25" FontWeight="Black" Grid.Column="0" />
+                        <Border BorderBrush="Snow" BorderThickness="2" HorizontalAlignment="Center" Height="8" Margin="14,46,4,0" VerticalAlignment="Top" Width="388" Background="Silver" Grid.Column="0"/>
+                        <TextBlock Text="Current Global Info" Margin="81,5,39.667,194.667" Foreground="DarkRed" FontSize="25" FontWeight="Black" Grid.Column="1"/>
+                        <Border BorderBrush="Snow" BorderThickness="2" HorizontalAlignment="Center" Height="8" Margin="14,46,4,0" VerticalAlignment="Top" Width="387" Background="Silver" Grid.Column="1"/>
+                        <StackPanel HorizontalAlignment="Left" Height="166" Margin="15,65,0,0" VerticalAlignment="Top" Width="382" Grid.Column="1">
+                            <TextBlock x:Name="TextGlobalInfoCovid" Text="TextBlock" Margin="10,0" FontSize="30" FontWeight="Black"   Height="159" HorizontalAlignment="Center" Width="362"/>
                         </StackPanel>
                     </Grid>
                 </TabItem>
 
+                <TabItem Header="General Info">
+                    <Grid Background="White" Margin="0 0" MouseWheel="Grid_MouseWheel">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="60*"/>
+                            <RowDefinition Height="16*"/>
+                            <RowDefinition Height="165*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,10,-0.333,11">
+                            <StatusBar Background="White" Margin="0 0" Width="813">
+                                <StatusBar.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                        </Grid>
+                                    </ItemsPanelTemplate>
+                                </StatusBar.ItemsPanel>
+                                <WrapPanel HorizontalAlignment="Center" Width="149" Height="20" Background="White">
+                                    <Button x:Name="btnPlay" Click="btnPlay_Click" Height="19" BorderThickness="0">
+                                        <Image Source="/Resource/play.png" HorizontalAlignment="Stretch"/>
+                                    </Button>
+                                    <Button  x:Name="btnPause" Margin="5,0" Click="btnPause_Click" Height="19" BorderThickness="0">
+                                        <Image Source="/Resource/pause.png" HorizontalAlignment="Stretch"/>
+                                    </Button>
+                                    <Button x:Name="btnStop" Click="btnStop_Click" Height="19" BorderThickness="0">
+                                        <Image Source="/Resource/stop.png" HorizontalAlignment="Stretch"/>
+                                    </Button>
+                                    <StatusBarItem Width="81" Height="22">
+                                        <TextBlock x:Name="lblProgressStatus" Width="75"><Run Text="00:00/00:00"/></TextBlock>
+                                    </StatusBarItem>
+                                </WrapPanel>
+                                <StatusBarItem Grid.Column="1" HorizontalContentAlignment="Stretch" Margin="-0.2,0,0.4,-0.4">
+                                    <Slider x:Name="sliProgress" Thumb.DragStarted="sliProgress_DragStarted"  Thumb.DragCompleted="sliProgress_DragCompleted" ValueChanged="sliProgress_ValueChanged" Margin="0,0,0.6,0" />
+                                </StatusBarItem>
+                                <StatusBarItem Grid.Column="2">
+                                    <ProgressBar x:Name="pbVolume" Width="50" Height="12" Maximum="1" Value="{Binding Volume, ElementName=mediaPlayer}" />
+                                </StatusBarItem>
+                            </StatusBar>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Grid.Row="2"  Margin="0,10,-0.333,1.667">
+                            <TextBlock x:Name="TextBlockOthers" Text="Others" FontSize="14"/>
+                        </StackPanel>
+                        <Border BorderBrush="Snow" Background="DarkBlue" BorderThickness="2" HorizontalAlignment="Left" Height="12" Margin="-3,4,-0.333,0" Grid.Row="1" VerticalAlignment="Top" Width="816" RenderTransformOrigin="0.5,0.5">
+
+                        </Border>
+
+                    </Grid>
+
+                </TabItem>
+
             </TabControl>
         </StackPanel>
-        <StackPanel HorizontalAlignment="Left"  Margin="9.667,3,0,0" VerticalAlignment="Top" Width="380" Height="231" Grid.Column="2">
-            <TextBlock x:Name="CountryName" Text="CountryName" FontSize="20" FontWeight="Black" VerticalAlignment="Top" Margin="0,0,-376,10" />
-            <TextBlock x:Name="CountryInfo" Text="InfoCountry" FontSize="16" FontWeight="Black" VerticalAlignment="Top" />
+        <StackPanel HorizontalAlignment="Left"  Margin="9.6,62.2,0,0" VerticalAlignment="Top" Width="413" Height="auto" Grid.Column="1" Grid.Row="1">
+            <TextBlock x:Name="CountryInfo" Visibility="Hidden" Text="Info Country" FontSize="20" FontWeight="Black" Height="auto" Width="auto" Margin="0,0,-152,0"/>
         </StackPanel>
-        <StackPanel Orientation="Horizontal" Margin="2.667,10,10.333,175" Grid.Column="1" >
-            <TextBox x:Name="TextBoxSearch" Margin="0,0,0,31.667" Width="107"  SelectionChanged="TextBoxSearch_SelectionChanged" RenderTransformOrigin="0.5,0.5" GotFocus="TextBoxSearch_GotFocus" LostFocus="TextBoxSearch_LostFocus" Text="Search for Country">
+        <TextBlock x:Name="CountryName" Visibility="Hidden" Text="Country Name" FontSize="28" FontWeight="Black" HorizontalAlignment="Left" Grid.Row="1" Width="786" Height="60" Grid.ColumnSpan="3" Margin="280,0,32,267"/>
+        <StackPanel HorizontalAlignment="Left" Height="64" VerticalAlignment="Top" Width="1097" Grid.ColumnSpan="3" RenderTransformOrigin="0.5,0.5" Grid.RowSpan="2">
+            <Button x:Name="Btn_systemInfo" Content="System Info" Width="172" Height="46" Margin="0 0" HorizontalAlignment="Right" Background="#3F3F46" Foreground="White" FontSize="20" FontWeight="Bold" Click="Btn_systemInfo_Click"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Grid.Column="2" Grid.Row="1" Margin="9.8,62.2,0,74">
+            <StackPanel.Background>
+                <ImageBrush ImageSource="{Binding FlagPath}"  x:Name="ImageCountry" />
+            </StackPanel.Background>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,2,10.333,13.667" >
+            <TextBox x:Name="TextBoxSearch" Width="270"  SelectionChanged="TextBoxSearch_SelectionChanged" RenderTransformOrigin="0.5,0.5" GotFocus="TextBoxSearch_GotFocus" LostFocus="TextBoxSearch_LostFocus" Text="Search for Country" Height="32" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="16" Margin="0,0,0,0.667" />
+        </StackPanel>
+        <Border BorderBrush="Black" BorderThickness="2" HorizontalAlignment="Left" Height="8" Margin="0.667,49.333,0,0" VerticalAlignment="Top" Width="817" Grid.ColumnSpan="2" Background="DarkBlue" Grid.Column="1" Grid.Row="1" RenderTransformOrigin="0.5,0.5"/>
 
-            </TextBox>
-        </StackPanel>
+        <Button x:Name="Btn_Close" Content="X" Width="auto" Foreground="Red" FontSize="20" FontWeight="Bold" HorizontalContentAlignment="Center" Click="Btn_Close_Click" Visibility="Hidden" Grid.Column="2" Margin="358,14.333,-0.667,278.667" Grid.Row="1" Background="Transparent" BorderThickness="0"/>
+
 
     </Grid>
+
+
 </Window>

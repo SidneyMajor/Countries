@@ -9,6 +9,7 @@ namespace Countries.Models
     {
         private Uri _flagPath;
         private Uri _flagPathIco;
+        private Uri _anthemPath;
         public string Name { get; set; }
         //public List<string> TopLevelDomain { get; set; }
         public string Alpha2Code { get; set; }
@@ -28,7 +29,7 @@ namespace Countries.Models
         //public List<string> Borders { get; set; }
         //public string NativeName { get; set; }
         //public string NumericCode { get; set; }
-        public List<Currency> Currencies { get; set; }
+        public List<Currency> Currencies { get; set; } 
         public List<Language> Languages { get; set; }
         public Translations Translations { get; set; }
         public string Flag { get; set; }
@@ -37,6 +38,7 @@ namespace Countries.Models
         //public Uri FlagPath { get; set; }
         public Uri FlagPath { get => _flagPath; set { _flagPath = value; OnNotifyPropertyChanged("FlagPath"); } }
         public Uri FlagPathIco { get => _flagPathIco; set { _flagPathIco = value; OnNotifyPropertyChanged("FlagPathIco"); } }
+        public Uri AnthemPath { get=>_anthemPath; set { _anthemPath = value; OnNotifyPropertyChanged("AnthemPath"); } }
         ////TreeViewItems
         //public string Title { get; set; }
         ////Representa uma coleção de dados dinâmica que fornece notificações quando itens são adicionados, removidos ou quando a lista inteira é atualizada.
