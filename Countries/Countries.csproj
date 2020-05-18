@@ -169,6 +169,10 @@
     <Resource Include="Resource\play.png" />
     <Resource Include="Resource\stop.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resource\cancel.ico" />
+    <Resource Include="Resource\info.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

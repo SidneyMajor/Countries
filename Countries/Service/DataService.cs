@@ -11,6 +11,7 @@ namespace Countries.Service
     using System.Linq;
     using System.Net;
     using System.Threading.Tasks;
+    using System.Windows;
 
     public class DataService
     {
@@ -46,12 +47,20 @@ namespace Countries.Service
         }
 
         #region Country
-
+        /// <summary>
+        /// Download Country Anthem
+        /// </summary>
+        /// <param name="countries"></param>
+        /// <param name="progress"></param>
+        /// <returns></returns>
         public async Task CountryAnthemAsync(List<Country> countries, IProgress<ProgressReport> progress)
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             DirectoryInfo path = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
+            DirectoryInfo pathBackup = new DirectoryInfo(Environment.CurrentDirectory);
             ProgressReport report = new ProgressReport();
+            FileInfo fileLength;
+
             if(!Directory.Exists(path + @"\Audio"))
             {
                 Directory.CreateDirectory(path + @"\Audio");
@@ -61,25 +70,37 @@ namespace Countries.Service
             {
                 foreach(Country country in countries)
                 {
-                    string fileName = path + @"\Audio" + $"\\{country.Alpha2Code}.mp3";
+                    string fileName = path + @"\Audio" + $"\\{country.Alpha2Code.ToLower()}.mp3";
+                    string fileBackup = pathBackup + @"\Backup\Audio" + $"\\{country.Alpha2Code.ToLower()}.mp3";
                     if(!File.Exists(fileName))
                     {
+
                         try
                         {
-                            await client.DownloadFileTaskAsync($"http://www.nationalanthems.info/{country.Alpha2Code.ToLower()}.mp3", fileName);
+                            await client.DownloadFileTaskAsync($"http://www.nationalanthems.info/{country.Alpha2Code.ToLower()}.mp3", fileName);                           
                         }
-                        catch(Exception )
-                        {
+                        catch(Exception)
+                        {                           
+                            if(File.Exists(fileBackup))
+                            {
+                                if(File.Exists(fileName))
+                                {
+                                    fileLength = new FileInfo(fileBackup);
+                                    File.Delete(fileName);
+                                    fileLength.CopyTo(fileName);
+                                }
+                            }
                             continue;
-                           
                         }
                     }
-                    country.AnthemPath = new Uri(fileName);
+                   country.AnthemPath = new Uri(fileName);
                     report.SaveCountries.Add(country);
                     report.PercentComplet = (report.SaveCountries.Count * 100) / countries.Count;
                     progress.Report(report);
                 }
+
             }
+           
             watch.Stop();
             var elapsedMs = watch.ElapsedMilliseconds;
             _dialogService.ShowMessage("Time Save Audio", elapsedMs.ToString());
@@ -101,8 +122,9 @@ namespace Countries.Service
                      "Demonym varchar(100)," +
                      "Area real," +
                      "Gini real," +
-                     "FlagPath varchar(200)," +
-                     "FlagPathIco varchar(200)," +
+                     "LocalUpdate DateTime," +
+                     //"FlagPath varchar(200)," +
+                     //"FlagPathIco varchar(200)," +
                      "Alpha2Code char(2)," +
                      "Alpha3Code char(3) PRIMARY KEY)";
 
@@ -173,6 +195,7 @@ namespace Countries.Service
         public async Task SaveImageAsync(List<Country> countries, IProgress<ProgressReport> progress)
         {
             DirectoryInfo path = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+            DirectoryInfo pathBackup = new DirectoryInfo(Environment.CurrentDirectory);
             ProgressReport report = new ProgressReport();
             if(!Directory.Exists(path + @"\Photos"))
             {
@@ -187,17 +210,22 @@ namespace Countries.Service
             using(WebClient client = new WebClient())
             {
                 var watch = System.Diagnostics.Stopwatch.StartNew();
+                string name = string.Empty;
                 foreach(Country flagPath in countries)
                 {
                     if(flagPath.Name.Contains("'"))
-                    {
-                        flagPath.Name = flagPath.Name.Replace("'", " ");
-                    }
+                        name = flagPath.Name.Replace("'", " ");
+                    else
+                        name = flagPath.Name;
+
                     //Image for to TreeView..
-                    string fileNameIco = path + @"\Photos\PhotosIco" + $"\\{flagPath.Name}.png";
+                    string fileNameIco = path + @"\Photos\PhotosIco" + $"\\{name}.png";
+                    string fileBackupIco = pathBackup + @"\Backup\Photos\PhotosIco" + $"\\{name}.png";
+                    string fileName = path + @"\Photos" + $"\\{name}.svg";
+                    string fileBackup = pathBackup + @"\Backup\Photos" + $"\\{name}.jpg";
+                    FileInfo fileLength;
 
-
-                    if(!File.Exists(path + @"\Photos" + $"\\{flagPath.Name}.jpg"))
+                    if(!File.Exists(path + @"\Photos" + $"\\{name}.jpg"))
                     {
                         try
                         {
@@ -205,30 +233,40 @@ namespace Countries.Service
                             {
                                 await Task.Run(() => client.DownloadFile(new Uri("https://www.countryflags.io/" + $"{flagPath.Alpha2Code}" + "/shiny/64.png"), $"{fileNameIco}"));
                             }
-                            string fileName = path + @"\Photos" + $"\\{flagPath.Name}.svg";
-                            //string fileNameIco = path + @"\Photos\PhotosIco" + $"\\{flagPath.Name}.png";
 
                             await Task.Run(() => client.DownloadFile(flagPath.Flag, fileName));
                             SvgDocument svgDocument = SvgDocument.Open(fileName);
                             htmlToImageConverter.Height = Convert.ToInt32(svgDocument.Height);
                             htmlToImageConverter.Width = Convert.ToInt32(svgDocument.Width);
 
-                            htmlToImageConverter.GenerateImageFromFile(fileName, "jpg", path + @"\Photos" + $"\\{flagPath.Name}.jpg");
+                            htmlToImageConverter.GenerateImageFromFile(fileName, "jpg", path + @"\Photos" + $"\\{name}.jpg");
 
-                            //Bitmap bitmap = svgDocument.Draw(htmlToImageConverter.ToolPath);
-                            //Bitmap bitmap = new Bitmap(htmlToImageConverter.ToolPath);
-                            //bitmap.Save(path + @"\Photos" + $"\\{flagPath.Name}.jpg", ImageFormat.Jpeg);
-                            ////bitmap.Dispose();                         
                             await Task.Run(() => DeleteImageSvg(fileName));
 
                         }
                         catch(Exception)
                         {
+                            if(File.Exists(fileBackup))
+                            {
+                                fileLength = new FileInfo(fileBackup);
+                                if(!File.Exists(path + @"\Photos" + $"\\{name}.jpg"))
+                                {
+                                    fileLength.CopyTo(path + @"\Photos" + $"\\{name}.jpg");
+                                }
+                            }
 
+                            if(File.Exists(fileBackupIco))
+                            {
+                                fileLength = new FileInfo(fileBackupIco);
+                                if(!File.Exists(fileNameIco))
+                                {
+                                    fileLength.CopyTo(fileNameIco);
+                                }
+                            }
                             continue;
                         }
                     }
-                    flagPath.FlagPath = new Uri(path + @"\Photos" + $"\\{flagPath.Name}.jpg");
+                    flagPath.FlagPath = new Uri(path + @"\Photos" + $"\\{name}.jpg");
                     flagPath.FlagPathIco = new Uri(fileNameIco);
                     report.SaveCountries.Add(flagPath);
                     report.PercentComplet = (report.SaveCountries.Count * 100) / countries.Count;
@@ -315,23 +353,27 @@ namespace Countries.Service
         /// <returns></returns>
         private async Task InsertCountryAsync(Country country)
         {
-            _command.Parameters.AddWithValue("@name", country.Name);
-            _command.Parameters.AddWithValue("@capital", country.Capital);
+            _command.Parameters.AddWithValue("@name", country.Name.Replace("'", " "));
+            _command.Parameters.AddWithValue("@capital", country.Capital.Replace("'", " "));
             _command.Parameters.AddWithValue("@region", country.Region);
             _command.Parameters.AddWithValue("@subregion", country.Subregion);
             _command.Parameters.AddWithValue("@population", country.Population);
             _command.Parameters.AddWithValue("@gini", country.Gini);
             _command.Parameters.AddWithValue("@area", country.Area);
-            _command.Parameters.AddWithValue("@demonym", country.Demonym);
-            _command.Parameters.AddWithValue("@flagPath", country.FlagPath.AbsoluteUri);
-            _command.Parameters.AddWithValue("@flagPathIco", country.FlagPathIco.AbsoluteUri);
+            _command.Parameters.AddWithValue("@demonym", country.Demonym.Replace("'", " "));
+            _command.Parameters.AddWithValue("@localdate", DateTime.Now);
+            //_command.Parameters.AddWithValue("@flagPath", country.FlagPath.AbsoluteUri);
+            //_command.Parameters.AddWithValue("@flagPathIco", country.FlagPathIco.AbsoluteUri);
             _command.Parameters.AddWithValue("@alpha3Code", country.Alpha3Code);
             _command.Parameters.AddWithValue("@alpha2Code", country.Alpha2Code);
 
             try
             {
-                _command.CommandText = "INSERT INTO Countries(Name, Capital, Region, Subregion, Population, Gini, Area, Demonym, FlagPath, FlagPathIco, Alpha2Code, Alpha3Code)" +
-                    "values(@name, @capital, @region, @subregion, @population, @gini, @area, @demonym, @flagPath, @flagPathIco, @alpha2Code, @alpha3Code)";
+                //_command.CommandText = "INSERT INTO Countries(Name, Capital, Region, Subregion, Population, Gini, Area, Demonym, FlagPath, FlagPathIco, Alpha2Code, Alpha3Code)" +
+                //    "values(@name, @capital, @region, @subregion, @population, @gini, @area, @demonym, @flagPath, @flagPathIco, @alpha2Code, @alpha3Code)";
+
+                _command.CommandText = "INSERT INTO Countries(Name, Capital, Region, Subregion, Population, Gini, Area, Demonym,LocalUpdate, Alpha2Code, Alpha3Code)" +
+                  "values(@name, @capital, @region, @subregion, @population, @gini, @area, @demonym,@localdate, @alpha2Code, @alpha3Code)";
                 _command.Connection = _connection;
                 await Task.Run(() => _command.ExecuteNonQuery());
             }
@@ -352,19 +394,11 @@ namespace Countries.Service
             foreach(Currency currency in country.Currencies)
             {
                 if(string.IsNullOrEmpty(currency.Name))
-                {
                     currency.Name = "ND";
-                }
-
                 if(string.IsNullOrEmpty(currency.Symbol))
-                {
                     currency.Symbol = "ND";
-                }
-
                 if(string.IsNullOrEmpty(currency.Code))
-                {
                     currency.Code = "ND";
-                }
 
                 try
                 {
@@ -408,24 +442,13 @@ namespace Countries.Service
             foreach(Language language in country.Languages)
             {
                 if(string.IsNullOrEmpty(language.Name))
-                {
                     language.Name = "Not available";
-                }
-
                 if(string.IsNullOrEmpty(language.Iso639_1))
-                {
                     language.Iso639_1 = "Not available";
-                }
-
                 if(string.IsNullOrEmpty(language.Iso639_2))
-                {
                     language.Iso639_2 = "Not available";
-                }
-
                 if(string.IsNullOrEmpty(language.NativeName))
-                {
                     language.NativeName = "Not available";
-                }
 
                 try
                 {
@@ -496,10 +519,7 @@ namespace Countries.Service
         /// <param name="country"></param>
         private void CheckDataCountry(Country country)
         {
-            if(country.Name.Contains("'"))
-                country.Name = country.Name.Replace("'", " ");
-            if(country.Capital.Contains("'"))
-                country.Capital = country.Capital.Replace("'", " ");
+           
             if(string.IsNullOrEmpty(country.Capital))
                 country.Capital = "Not available";
             if(string.IsNullOrEmpty(country.Region))
@@ -509,8 +529,6 @@ namespace Countries.Service
             if(country.Gini == null || string.IsNullOrEmpty(country.Gini))
                 country.Gini = "Not available";
             country.Area = country.Area.GetValueOrDefault();
-            if(country.Demonym.Contains("'"))
-                country.Demonym = country.Name.Replace("'", " ");
             if(string.IsNullOrEmpty(country.Demonym))
                 country.Demonym = "Not available";
         }
@@ -697,7 +715,9 @@ namespace Countries.Service
             List<Country> countries = new List<Country>();
             try
             {
-                _command.CommandText = "SELECT Name, Capital, Region, Subregion, Population, Demonym, Area, Gini, FlagPath,FlagPathIco, Alpha2Code, Alpha3Code From countries";
+                //_command.CommandText = "SELECT Name, Capital, Region, Subregion, Population, Demonym, Area, Gini, FlagPath,FlagPathIco, Alpha2Code, Alpha3Code From countries";
+                _command.CommandText = "SELECT Name, Capital, Region, Subregion, Population, Demonym,LocalUpdate, Area, Gini, Alpha2Code, Alpha3Code From countries";
+
                 _command.Connection = _connection;
                 //Lê cada registo
                 SQLiteDataReader reader = _command.ExecuteReader();
@@ -718,8 +738,9 @@ namespace Countries.Service
                             Demonym = (string)reader["Demonym"],
                             Area = (double)reader["Area"],
                             Gini = reader["Gini"].ToString(),
-                            FlagPath = new Uri(reader["FlagPath"].ToString()),
-                            FlagPathIco = new Uri(reader["FlagPathIco"].ToString()),
+                            LocalUpdate = Convert.ToDateTime(reader["LocalUpdate"].ToString()),
+                            //FlagPath = new Uri(reader["FlagPath"].ToString()),
+                            //FlagPathIco = new Uri(reader["FlagPathIco"].ToString()),
                             Currencies = new List<Currency>(),
                             Languages = new List<Language>(),
                         });
@@ -743,6 +764,68 @@ namespace Countries.Service
                 return null;
             }
 
+        }
+
+        public void SaveText(string alpha3Code, string output)
+        {
+           
+            if(alpha3Code != "COG" && alpha3Code != "GEO")
+            {
+                try
+                {
+                    if(!string.IsNullOrEmpty(output) && output.Contains("\n\n"))
+                        output = output.Replace("\n\n", "");
+                    else if(!string.IsNullOrEmpty(output) && output.Contains("\n"))
+                        output = output.Replace("\n", "");
+
+                    string file = $"{alpha3Code}.txt";
+                    if(!string.IsNullOrEmpty(output))
+                    {
+
+                        StreamWriter sw = new StreamWriter(file, false);
+                        if(!File.Exists(file))
+                        {
+                            sw = File.CreateText(file);
+                        }
+                        sw.WriteLine(output);
+                        sw.Close();
+                    }
+                    else
+                    {
+                        string fileBackup = $"{Environment.CurrentDirectory}\\InfoWikiCountry\\{alpha3Code}.txt";
+                        if(File.Exists(fileBackup))
+                        {
+                            FileInfo files = new FileInfo(fileBackup);
+                            File.Delete(file);
+                            files.CopyTo(file);
+                        }
+                    }
+
+                }
+                catch(Exception e)
+                {
+                    _dialogService.ShowMessage("Erro", e.Message);
+                }
+            }
+            else
+            {
+                try
+                {
+                    string fileBackup = $"{Environment.CurrentDirectory}\\InfoWikiCountry\\{alpha3Code}.txt";
+                    string file = $"{alpha3Code}.txt";
+                    if(File.Exists(fileBackup))
+                    {
+                        FileInfo files = new FileInfo(fileBackup);
+                        File.Delete(file);
+                        files.CopyTo(file);
+                    }
+                }
+                catch(Exception e)
+                {
+
+                    _dialogService.ShowMessage("Erro", e.Message);
+                }
+            }
         }
         #endregion Country
 

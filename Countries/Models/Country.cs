@@ -39,6 +39,7 @@ namespace Countries.Models
         public Uri FlagPath { get => _flagPath; set { _flagPath = value; OnNotifyPropertyChanged("FlagPath"); } }
         public Uri FlagPathIco { get => _flagPathIco; set { _flagPathIco = value; OnNotifyPropertyChanged("FlagPathIco"); } }
         public Uri AnthemPath { get=>_anthemPath; set { _anthemPath = value; OnNotifyPropertyChanged("AnthemPath"); } }
+        public DateTime LocalUpdate { get; set; }
         ////TreeViewItems
         //public string Title { get; set; }
         ////Representa uma coleção de dados dinâmica que fornece notificações quando itens são adicionados, removidos ou quando a lista inteira é atualizada.

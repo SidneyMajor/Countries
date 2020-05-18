@@ -7,6 +7,7 @@ namespace Countries.Service
     using System;
     using System.Collections.Generic;
     using System.Net.Http;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     public class ApiService
@@ -159,6 +160,67 @@ namespace Countries.Service
                 {
                     IsSuccess = false,
                     Message = ex.Message,
+                };
+            }
+        }
+        /// <summary>
+        /// Get Text info Country
+        /// </summary>
+        /// <param name="urlBase"></param>
+        /// <param name="controller"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public async Task<Response> GetText(string urlBase, string controller, string name)
+        {
+            try
+            {
+                var client = new HttpClient
+                {
+                    BaseAddress = new Uri(urlBase)//Onde está o endereço base da API
+                }; //Criar um Http para fazer a ligação externa via http
+
+                var response = await client.GetAsync(controller);//Onde está o Controlador da API
+                var result = await response.Content.ReadAsStringAsync();//Carregar os resultados em forma de string para dentro do result
+
+                string[] parts = result.Split(new string[] { "&lt;/p&gt;" }, StringSplitOptions.None); //Split the string by paragraphs (closing paragraph tag)
+
+                var output = string.Empty;
+
+                if(parts[1].Contains(name)) //Mudar o nome consosante o país
+                    output = parts[1] + parts[2];
+                else
+                    output = parts[2] + parts[3];
+
+                //Remove the tags from the XML
+                //output = Regex.Replace(output, @"&lt;[^&gt;]+&gt;", string.Empty); //Remove Tags
+                output = Regex.Replace(output, @"(&lt;[\s\S]+?&gt;)", string.Empty); //Remove  Tags
+                output = Regex.Replace(output, @"\t|\n|\r", string.Empty); //Espaços em branco
+
+                //GC.Collect();
+                //GC.WaitForPendingFinalizers();
+                //GC.Collect();
+
+                if(!response.IsSuccessStatusCode)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = result
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = true,
+                    Result = output
+                };
+            }
+            catch(Exception ex)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
                 };
             }
         }
