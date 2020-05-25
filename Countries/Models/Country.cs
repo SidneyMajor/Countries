@@ -10,6 +10,7 @@ namespace Countries.Models
         private Uri _flagPath;
         private Uri _flagPathIco;
         private Uri _anthemPath;
+        //private string _text;
         public string Name { get; set; }
         //public List<string> TopLevelDomain { get; set; }
         public string Alpha2Code { get; set; }
@@ -39,6 +40,7 @@ namespace Countries.Models
         public Uri FlagPath { get => _flagPath; set { _flagPath = value; OnNotifyPropertyChanged("FlagPath"); } }
         public Uri FlagPathIco { get => _flagPathIco; set { _flagPathIco = value; OnNotifyPropertyChanged("FlagPathIco"); } }
         public Uri AnthemPath { get=>_anthemPath; set { _anthemPath = value; OnNotifyPropertyChanged("AnthemPath"); } }
+        //public string Text { get => _text; set { _text = value; OnNotifyPropertyChanged("Text"); } }
         public DateTime LocalUpdate { get; set; }
         ////TreeViewItems
         //public string Title { get; set; }

@@ -53,9 +53,8 @@ namespace Countries.Service
         /// <param name="countries"></param>
         /// <param name="progress"></param>
         /// <returns></returns>
-        public async Task CountryAnthemAsync(List<Country> countries, IProgress<ProgressReport> progress)
-        {
-            var watch = System.Diagnostics.Stopwatch.StartNew();
+        public async Task CountryAnthemAsync(List<Country> countries, IProgress<ProgressReport> progress)        {
+          
             DirectoryInfo path = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
             DirectoryInfo pathBackup = new DirectoryInfo(Environment.CurrentDirectory);
             ProgressReport report = new ProgressReport();
@@ -77,10 +76,10 @@ namespace Countries.Service
 
                         try
                         {
-                            await client.DownloadFileTaskAsync($"http://www.nationalanthems.info/{country.Alpha2Code.ToLower()}.mp3", fileName);                           
+                            await client.DownloadFileTaskAsync($"http://www.nationalanthems.info/{country.Alpha2Code.ToLower()}.mp3", fileName);
                         }
                         catch(Exception)
-                        {                           
+                        {
                             if(File.Exists(fileBackup))
                             {
                                 if(File.Exists(fileName))
@@ -93,17 +92,13 @@ namespace Countries.Service
                             continue;
                         }
                     }
-                   country.AnthemPath = new Uri(fileName);
+                    country.AnthemPath = new Uri(fileName);
                     report.SaveCountries.Add(country);
                     report.PercentComplet = (report.SaveCountries.Count * 100) / countries.Count;
                     progress.Report(report);
                 }
 
-            }
-           
-            watch.Stop();
-            var elapsedMs = watch.ElapsedMilliseconds;
-            _dialogService.ShowMessage("Time Save Audio", elapsedMs.ToString());
+            }           
         }
         /// <summary>
         /// Creat all table to dbo Countries
@@ -197,6 +192,7 @@ namespace Countries.Service
             DirectoryInfo path = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
             DirectoryInfo pathBackup = new DirectoryInfo(Environment.CurrentDirectory);
             ProgressReport report = new ProgressReport();
+
             if(!Directory.Exists(path + @"\Photos"))
             {
                 Directory.CreateDirectory(path + @"\Photos");
@@ -209,7 +205,6 @@ namespace Countries.Service
 
             using(WebClient client = new WebClient())
             {
-                var watch = System.Diagnostics.Stopwatch.StartNew();
                 string name = string.Empty;
                 foreach(Country flagPath in countries)
                 {
@@ -218,14 +213,16 @@ namespace Countries.Service
                     else
                         name = flagPath.Name;
 
-                    //Image for to TreeView..
+                    //Image TreeView..
                     string fileNameIco = path + @"\Photos\PhotosIco" + $"\\{name}.png";
                     string fileBackupIco = pathBackup + @"\Backup\Photos\PhotosIco" + $"\\{name}.png";
+
                     string fileName = path + @"\Photos" + $"\\{name}.svg";
                     string fileBackup = pathBackup + @"\Backup\Photos" + $"\\{name}.jpg";
+
                     FileInfo fileLength;
 
-                    if(!File.Exists(path + @"\Photos" + $"\\{name}.jpg"))
+                    if(!File.Exists(path + @"\Photos" + $"\\{name}.jpg" /*fileName*/))
                     {
                         try
                         {
@@ -267,14 +264,12 @@ namespace Countries.Service
                         }
                     }
                     flagPath.FlagPath = new Uri(path + @"\Photos" + $"\\{name}.jpg");
+                    //flagPath.FlagPath = new Uri(fileName);
                     flagPath.FlagPathIco = new Uri(fileNameIco);
                     report.SaveCountries.Add(flagPath);
                     report.PercentComplet = (report.SaveCountries.Count * 100) / countries.Count;
                     progress.Report(report);
                 }
-                watch.Stop();
-                var elapsedMs = watch.ElapsedMilliseconds;
-                _dialogService.ShowMessage("Time Save Images", elapsedMs.ToString());
             }
         }
         /// <summary>
@@ -305,9 +300,8 @@ namespace Countries.Service
         /// <returns></returns>
         public async Task SaveDataCountriesAsync(List<Country> countries, IProgress<ProgressReport> progress)
         {
-            CultureInfo ci = new CultureInfo("en-us");
+            CultureInfo ci = new CultureInfo("us");
             System.Threading.Thread.CurrentThread.CurrentCulture = ci;
-            var watch = System.Diagnostics.Stopwatch.StartNew();
             //Delete Data If Exists
             await DeleteDataCountriesAsync();
             ProgressReport report = new ProgressReport();
@@ -335,10 +329,6 @@ namespace Countries.Service
                 }
 
                 DistinctData.Clear();
-                watch.Stop();
-                var elapsedMs = watch.ElapsedMilliseconds;
-                _dialogService.ShowMessage("Time Country", elapsedMs.ToString());
-
                 _connection.Close();
             }
             catch(Exception e)
@@ -362,18 +352,13 @@ namespace Countries.Service
             _command.Parameters.AddWithValue("@area", country.Area);
             _command.Parameters.AddWithValue("@demonym", country.Demonym.Replace("'", " "));
             _command.Parameters.AddWithValue("@localdate", DateTime.Now);
-            //_command.Parameters.AddWithValue("@flagPath", country.FlagPath.AbsoluteUri);
-            //_command.Parameters.AddWithValue("@flagPathIco", country.FlagPathIco.AbsoluteUri);
             _command.Parameters.AddWithValue("@alpha3Code", country.Alpha3Code);
             _command.Parameters.AddWithValue("@alpha2Code", country.Alpha2Code);
 
             try
             {
-                //_command.CommandText = "INSERT INTO Countries(Name, Capital, Region, Subregion, Population, Gini, Area, Demonym, FlagPath, FlagPathIco, Alpha2Code, Alpha3Code)" +
-                //    "values(@name, @capital, @region, @subregion, @population, @gini, @area, @demonym, @flagPath, @flagPathIco, @alpha2Code, @alpha3Code)";
-
                 _command.CommandText = "INSERT INTO Countries(Name, Capital, Region, Subregion, Population, Gini, Area, Demonym,LocalUpdate, Alpha2Code, Alpha3Code)" +
-                  "values(@name, @capital, @region, @subregion, @population, @gini, @area, @demonym,@localdate, @alpha2Code, @alpha3Code)";
+                    "values(@name, @capital, @region, @subregion, @population, @gini, @area, @demonym,@localdate, @alpha2Code, @alpha3Code)";
                 _command.Connection = _connection;
                 await Task.Run(() => _command.ExecuteNonQuery());
             }
@@ -519,7 +504,7 @@ namespace Countries.Service
         /// <param name="country"></param>
         private void CheckDataCountry(Country country)
         {
-           
+
             if(string.IsNullOrEmpty(country.Capital))
                 country.Capital = "Not available";
             if(string.IsNullOrEmpty(country.Region))
@@ -715,9 +700,7 @@ namespace Countries.Service
             List<Country> countries = new List<Country>();
             try
             {
-                //_command.CommandText = "SELECT Name, Capital, Region, Subregion, Population, Demonym, Area, Gini, FlagPath,FlagPathIco, Alpha2Code, Alpha3Code From countries";
                 _command.CommandText = "SELECT Name, Capital, Region, Subregion, Population, Demonym,LocalUpdate, Area, Gini, Alpha2Code, Alpha3Code From countries";
-
                 _command.Connection = _connection;
                 //Lê cada registo
                 SQLiteDataReader reader = _command.ExecuteReader();
@@ -739,8 +722,6 @@ namespace Countries.Service
                             Area = (double)reader["Area"],
                             Gini = reader["Gini"].ToString(),
                             LocalUpdate = Convert.ToDateTime(reader["LocalUpdate"].ToString()),
-                            //FlagPath = new Uri(reader["FlagPath"].ToString()),
-                            //FlagPathIco = new Uri(reader["FlagPathIco"].ToString()),
                             Currencies = new List<Currency>(),
                             Languages = new List<Language>(),
                         });
@@ -765,10 +746,13 @@ namespace Countries.Service
             }
 
         }
-
+        /// <summary>
+        /// Save Text about the country in Txt
+        /// </summary>
+        /// <param name="alpha3Code"></param>
+        /// <param name="output"></param>
         public void SaveText(string alpha3Code, string output)
         {
-           
             if(alpha3Code != "COG" && alpha3Code != "GEO")
             {
                 try
@@ -826,6 +810,7 @@ namespace Countries.Service
                     _dialogService.ShowMessage("Erro", e.Message);
                 }
             }
+
         }
         #endregion Country
 
@@ -839,10 +824,9 @@ namespace Countries.Service
         /// <returns></returns>
         public async Task SaveDataRatesAsync(List<Rate> Rates, IProgress<ProgressReport> progress)
         {
-            CultureInfo ci = new CultureInfo("en-us");
+            CultureInfo ci = new CultureInfo("us");
             System.Threading.Thread.CurrentThread.CurrentCulture = ci;
             ProgressReport report = new ProgressReport();
-            var watch = System.Diagnostics.Stopwatch.StartNew();
             string pathRate = @"Data\Rates.sqlite";
             string sqlcommandRate = "create table if not exists rates(RateId int, Code varchar(5), TaxRate real, Name varchar(250))";
 
@@ -871,9 +855,6 @@ namespace Countries.Service
                     progress.Report(report);
                 }
                 _connection.Close();
-                watch.Stop();
-                var elapsedMs = watch.ElapsedMilliseconds;
-                _dialogService.ShowMessage("Time Rates", elapsedMs.ToString());
             }
             catch(Exception e)
             {
@@ -957,10 +938,9 @@ namespace Countries.Service
         /// <returns></returns>
         public async Task SaveDataInfoCovidAsync(RootCovid rootCovid, IProgress<ProgressReport> progress)
         {
-            CultureInfo ci = new CultureInfo("en-us");
+            CultureInfo ci = new CultureInfo("us");
             System.Threading.Thread.CurrentThread.CurrentCulture = ci;
             ProgressReport report = new ProgressReport();
-            var watch = System.Diagnostics.Stopwatch.StartNew();
             string pathCovid = @"Data\InfoCovid19.sqlite";
             string sql = "create table if not exists InfoCovid(Date varchar(15) Primary Key)";
             // List<string> countrycode = new List<string>();
@@ -992,9 +972,6 @@ namespace Countries.Service
                     progress.Report(report);
                 }
                 _connection.Close();
-                watch.Stop();
-                var elapsedMs = watch.ElapsedMilliseconds;
-                _dialogService.ShowMessage("Time Covid19", elapsedMs.ToString());
             }
             catch(Exception e)
             {
@@ -1035,15 +1012,6 @@ namespace Countries.Service
                     "Slug varchar(100))";
                 _command.Connection = _connection;
                 _command.ExecuteNonQuery();
-                ////Creat Table InfoCovideCountryRootCovid
-                //_command.CommandText = "create table if not exists InfoCovidCountryRootCovid(" +
-                //    "infoDateCountry varchar(15)," +
-                //    "InfoCountryCode char(2)," +
-                //    "PRIMARY KEY (infoDateCountry, InfoCountryCode)," +
-                //    "FOREIGN KEY (infoDateCountry) REFERENCES InfoCovid(Date)," +
-                //    "FOREIGN KEY (InfoCountryCode) REFERENCES InfoCovidCountry(CountryCode))";
-                //_command.Connection = _connection;
-                //_command.ExecuteNonQuery();
             }
             catch(Exception e)
             {
@@ -1061,7 +1029,6 @@ namespace Countries.Service
             try
             {
                 //Insert row to InfoCovidGlobal
-                // _command.Parameters.AddWithValue("@infoDate", rootCovid.Date);
                 _command.Parameters.AddWithValue("@newConfirmed", rootCovid.Global.NewConfirmed);
                 _command.Parameters.AddWithValue("@totalConfirmed", rootCovid.Global.TotalConfirmed);
                 _command.Parameters.AddWithValue("@newDeaths", rootCovid.Global.NewDeaths);
@@ -1087,13 +1054,7 @@ namespace Countries.Service
         /// <returns></returns>
         private async Task InsertCovidCountryAsync(CovidCountry covid)
         {
-            ////Insert row to InfoCovideCountryRootCovid
-            //_command.Parameters.AddWithValue("@infoDate", covid.Date);
-            //_command.Parameters.AddWithValue("@infoCountryCode", covid.CountryCode);
-            //_command.CommandText = "INSERT INTO InfoCovidCountryRootCovid(infoDateCountry, InfoCountryCode) values(@infoDate, @infoCountryCode)";
-            //_command.Connection = _connection;
-            //await Task.Run(() => _command.ExecuteNonQuery());
-
+           
             try
             {
                 //Insert row to covid InfoCovidCountry
@@ -1110,8 +1071,7 @@ namespace Countries.Service
                 _command.CommandText = "INSERT INTO InfoCovidCountry(infoDate, NewConfirmed, TotalConfirmed, NewDeaths, TotalDeaths, NewRecovered, TotalRecovered, Country, CountryCode, Slug)" +
                     "values(@infoDate, @newConfirmed, @totalConfirmed, @newDeaths, @totalDeaths, @newRecovered, @totalRecovered, @country, @countryCode, @slug)";
                 _command.Connection = _connection;
-                await Task.Run(() => _command.ExecuteNonQuery());
-                //countrycode.Add(covid.CountryCode);
+                await Task.Run(() => _command.ExecuteNonQuery());               
             }
             catch(Exception e)
             {
@@ -1261,11 +1221,6 @@ namespace Countries.Service
                 _command.CommandText = "delete from InfoCovidCountry";
                 _command.Connection = _connection;
                 await Task.Run(() => _command.ExecuteNonQuery());
-
-                //_command.CommandText = "delete from InfoCovidCountryRootCovid";
-                //_command.Connection = _connection;
-                //await Task.Run(() => _command.ExecuteNonQuery());
-
             }
             catch(Exception e)
             {

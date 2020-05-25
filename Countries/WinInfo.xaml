@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Countries"
         mc:Ignorable="d"
          Icon="/Resource/glob.ico"
-        Title="System Info" Height="187.374" Width="513.295" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" >
+        Title="System Info" Height="187.374" Width="513.295" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Background="WhiteSmoke">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="40*"/>

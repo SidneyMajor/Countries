@@ -4,6 +4,7 @@ using Microsoft.VisualBasic.Devices;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -43,7 +44,8 @@ namespace Countries
         private RootCovid _rootCovid;
         private MediaPlayer _mediaPlayer;
         private bool _userIsDraggingSlider;
-        private bool _savedata;
+        private bool _savedata=false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -57,15 +59,40 @@ namespace Countries
             Rates = new List<Rate>();
             _mediaPlayer = new MediaPlayer();
 
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("en");
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("us");
+            Timer(1);
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            LabelHour.Content = DateTime.Now.ToLocalTime().ToLongTimeString();
             await LoadCountries();
-            ////await LoadLocalCountries();
-            ////AddTreeViewItems();
         }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            try
+            {
+
+                if(!_savedata)
+                {
+                    if(MessageBox.Show("Important process in progress. Are you sure?", "Stop", MessageBoxButton.YesNo, MessageBoxImage.Stop) == MessageBoxResult.Yes)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        e.Cancel = true;
+                    }
+                }                
+            }
+            catch(Exception ex)
+            {
+               _dialogService.ShowMessage("Erro",ex.Message);
+            }
+
+        }
+
         /// <summary>
         ///  Populate Path
         /// </summary>
@@ -146,7 +173,7 @@ namespace Countries
                 await LoadApiRates();
                 await LoadApiCovid19();
                 TreeViewCountries.ItemsSource = GetContinents(Countries);
-                await LoadText(Countries);
+                await DownloadText(Countries);
                 load = true;
             }
             else
@@ -172,22 +199,24 @@ namespace Countries
             {
 
                 LabelStatus.Content = string.Format("Data Upload from internet at {0:F}", DateTime.Now);
-                await Task.Run(() => _dataService.SaveImageAsync(Countries, progress));
+                await _dataService.SaveImageAsync(Countries, progress);
 
-                await Task.Run(() => _dataService.CountryAnthemAsync(Countries, progress));
+                await _dataService.CountryAnthemAsync(Countries, progress);
+
                 await _dataService.SaveDataCountriesAsync(Countries, progress);
+
                 if(Rates.Count != 0)
                     await _dataService.SaveDataRatesAsync(Rates, progress);
                 if(_rootCovid != null)
                     await _dataService.SaveDataInfoCovidAsync(_rootCovid, progress);
-                LabelStatus.Content = string.Format("Last Upload from internet at {0:F}", DateTime.Now);
-                _savedata = true;
+                LabelStatus.Content = string.Format("Last Upload from internet at {0:F}", DateTime.Now);               
             }
             else
             {
                 var date = Countries.FindLast(x => x.LocalUpdate != null);
                 LabelStatus.Content = string.Format("Last Upload from Local Data at {0:F}", date.LocalUpdate);
             }
+            _savedata = true;
         }
         /// <summary>
         /// Load APi Info Rats
@@ -209,7 +238,7 @@ namespace Countries
             Progress<ProgressReport> progress = new Progress<ProgressReport>();
             progress.ProgressChanged += ReportProgress;
             var response = await _apiService.GetCountries("https://restcountries.eu", "/rest/v2", progress);
-            Countries = (List<Country>)response.Result;
+            Countries = (List<Country>)response.Result;           
         }
         /// <summary>
         /// Load APi Info covid19
@@ -301,55 +330,21 @@ namespace Countries
         private async Task LoadLocalInfoCovid19()
         {
             _rootCovid = await _dataService.GetDataInfoCovid19Async();
-        }
-        /// <summary>
-        /// Visibility Items Control (change to visible)
-        /// </summary>
-        private void VisibleItems()
-        {
-            //InitImage.Visibility = Visibility.Hidden;
-            //TabControl.Visibility = Visibility.Visible;
-            //CountryInfo.Visibility = Visibility.Visible;
-            //CountryName.Visibility = Visibility.Visible;
-            Btn_Close.Visibility = Visibility.Visible;
-            _mediaPlayer.Close();
-        }
-        /// <summary>
-        ///  Visibility Items Control (change to hidden)
-        /// </summary>
-        private void HiddenItems()
-        {
-            //InitImage.Visibility = Visibility.Visible;
-            //TabControl.Visibility = Visibility.Hidden;
-            //CountryInfo.Visibility = Visibility.Hidden;
-            //CountryName.Visibility = Visibility.Hidden;
-            Btn_Close.Visibility = Visibility.Hidden;
-            //ImageCountry.ImageSource = null;
-            _mediaPlayer.Close();
-            //ImageCountry.Visibility = Visibility.Hidden;
-        }
+        }    
         /// <summary>
         /// Show same informations of Current Country
         /// </summary>
         /// <param name="countrySelect"></param>
         private void ShowInfoCountry(Country countrySelect)
         {
-            //Controlar o DataContext
             _mediaPlayer.Close();
-            //InitImage.Visibility = Visibility.Hidden;
-            PanelPrincipal.Visibility = Visibility.Visible;
-            PanelPrincipal.DataContext = countrySelect;
-            TabLanguage.DataContext = countrySelect.Translations;
-            //VisibleItems();
-            //CountryName.Text = countrySelect.Name;
-            //CountryInfo.Text = $"Region: {countrySelect.Region}\nSubregion: {countrySelect.Subregion}\nCapital: {countrySelect.Capital}" +
-            //    $"\nPopulation: {countrySelect.Population}\nArea: {countrySelect.Area}\nGini: {countrySelect.Gini}{Environment.NewLine}Demonym:{Environment.NewLine}{countrySelect.Demonym}";
-            //TextBlockTranslation.Text = $"Italian: {countrySelect.Translations.It}\n\nPortuguese(Pt): {countrySelect.Translations.Pt}\n\nPortuguese(Br): {countrySelect.Translations.Br}\n\n" +
-            //    $"German: {countrySelect.Translations.De}\n\nSpanish: {countrySelect.Translations.Es}";
-            //TextBlockTranslation2.Text = $"French: {countrySelect.Translations.Fr}\n\nJapanese: {countrySelect.Translations.Ja}\n\nDutch: {countrySelect.Translations.Nl}\n\n" +
-            //   $"Croatian: {countrySelect.Translations.Hr}\n\nPersian(Farsi): {countrySelect.Translations.Fa}";
+            LabelHour.Visibility = Visibility.Hidden;
+            MainPanel.Visibility = Visibility.Visible;
 
-            //LoadText(countrySelect);
+            MainPanel.DataContext = countrySelect;
+
+            TabLanguage.DataContext = countrySelect.Translations;
+
             TextBlockOthers.Text = ReadInfoCountry(countrySelect);
             //Currency Converter
             TextBoxInput.Text = string.Empty;
@@ -357,12 +352,6 @@ namespace Countries
             TextBoxOutput.Text = string.Empty;
 
             CheckCurrency(countrySelect, Rates);
-
-            //if(countrySelect.FlagPath != null)
-            //{
-            //    ImageSource ig = new BitmapImage(countrySelect.FlagPath);
-            //    ImageCountry.ImageSource = ig;
-            //}
 
             if(countrySelect.AnthemPath != null)
                 Player(countrySelect);
@@ -372,22 +361,14 @@ namespace Countries
                 if(_rootCovid.Countries.Count != 0)
                 {
                     var infocovid = _rootCovid.Countries.SingleOrDefault(c => c.CountryCode == countrySelect.Alpha2Code);
-                    if(infocovid != null)
-                    {
-                        PanelCovidCountry.DataContext = infocovid;
-                        //TextCountryInfoCovid.Text = $"Date: {infocovid.Date.AddDays(-1).ToString("dd/MM/yyyy")}\nConfirmed: {infocovid.TotalConfirmed}\nRecovered: {infocovid.TotalRecovered}\nDeaths: {infocovid.TotalDeaths}";
-                    }
-                    //else
-                    //{
-                    //    TxtCovidC.Text = "Not Available";
-                    //}
-
+                    if(infocovid != null)                    
+                        PanelCovidCountry.DataContext = infocovid;  
                 }
+
                 if(!_rootCovid.Global.Equals(null))
                 {
                     PanelCovidGlobal.DataContext = _rootCovid.Global;
                     TxtRootdate.DataContext = _rootCovid;
-                    //TextGlobalInfoCovid.Text = $"Date: {_rootCovid.Date.AddDays(-1).ToString("dd/MM/yyyy")}\nConfirmed: {_rootCovid.Global.TotalConfirmed}\nRecovered: {_rootCovid.Global.TotalRecovered}\nDeaths: {_rootCovid.Global.TotalDeaths}";
                 }
                 else
                     TxtRootdate.Text = "Not Available";
@@ -452,79 +433,6 @@ namespace Countries
             ComboBoxOutput.SelectedItem = aux;
             Conversion();
         }
-
-        private void ReportProgress(object sender, ProgressReport e)
-        {
-            ProgressBarLoad.Value = e.PercentComplet;
-        }
-        private void TreeViewCountries_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
-        {
-            if(TreeViewCountries.SelectedItem != null)
-            {
-                var getcountry = TreeViewCountries.SelectedItem as Country;
-                if(getcountry != null && getcountry.GetType().Name == "Country")
-                {
-                    var countrySelect = Countries.SingleOrDefault(x => x.Name == getcountry.Name);
-                    if(countrySelect != null)
-                    {
-                        ShowInfoCountry(countrySelect);
-                    }
-                }
-            }
-        }
-        private void TextBoxSearch_SelectionChanged(object sender, RoutedEventArgs e)
-        {
-            List<Country> Temp = null;
-            if(/*/*Countries.Count > 0 &&*/ TextBoxSearch.Text != "Search for Country")
-            {
-                Temp = Countries.FindAll(c => c.Name.ToLower().Contains(TextBoxSearch.Text.ToLower())).ToList();
-                TreeViewCountries.ItemsSource = GetContinents(Temp.ToList());
-
-                // TreeViewCountries.ItemContainerStyle = (new Setter(TreeViewItem.IsExpandedProperty, value: "True"));
-            }
-        }
-        private void TextBoxSearch_GotFocus(object sender, RoutedEventArgs e)
-        {
-            TextBoxSearch.Text = string.Empty;
-        }
-        private void TextBoxSearch_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if(TextBoxSearch.Text == string.Empty)
-            {
-                TextBoxSearch.Text = "Search for Country";
-            }
-        }
-        private void TextBoxInput_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if(!string.IsNullOrEmpty(TextBoxInput.Text))
-            {
-                Conversion();
-            }
-            else
-            {
-                TextBoxOutput.Text = string.Empty;
-            }
-
-        }
-        private void btnSwitchCurrency_Click(object sender, RoutedEventArgs e)
-        {
-            SwitchCurrency();
-        }
-        private void Btn_systemInfo_Click(object sender, RoutedEventArgs e)
-        {
-            WinInfo winInfo = new WinInfo();
-            winInfo.ShowDialog();
-        }
-        private void Btn_Close_Click(object sender, RoutedEventArgs e)
-        {
-            //HiddenItems();
-            //InitImage.Visibility = Visibility.Visible;
-            PanelPrincipal.Visibility = Visibility.Hidden;
-            ImageCountry.ImageSource = null;
-            _mediaPlayer.Close();
-        }
-
-        //Player
         /// <summary>
         /// Player Anthem
         /// </summary>
@@ -532,57 +440,25 @@ namespace Countries
         private void Player(Country country)
         {
             _mediaPlayer.Open(country.AnthemPath);//Alpha2code lower
+            Timer(0);
+        }
+        /// <summary>
+        /// Timer Tick
+        /// </summary>
+        /// <param name="second"></param>
+        private void Timer(int second)
+        {
             DispatcherTimer timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(0);
-            timer.Tick += timer_Tick;
+            timer.Interval = TimeSpan.FromSeconds(second);
+            timer.Tick += timer_Tick;            
             timer.Start();
         }
-        private void btnPlay_Click(object sender, RoutedEventArgs e)
-        {
-            _mediaPlayer.Play();
-        }
-        private void btnPause_Click(object sender, RoutedEventArgs e)
-        {
-            _mediaPlayer.Pause();
-        }
-        private void btnStop_Click(object sender, RoutedEventArgs e)
-        {
-            _mediaPlayer.Stop();
-        }
-        private void timer_Tick(object sender, EventArgs e)
-        {
-            if((_mediaPlayer.Source != null) && (_mediaPlayer.NaturalDuration.HasTimeSpan) && (!_userIsDraggingSlider))
-            {
-                sliProgress.Minimum = 0;
-                sliProgress.Maximum = _mediaPlayer.NaturalDuration.TimeSpan.TotalSeconds;
-                sliProgress.Value = _mediaPlayer.Position.TotalSeconds;
-
-                pbVolume.Value = _mediaPlayer.Volume;
-            }
-        }
-        private void sliProgress_DragStarted(object sender, DragStartedEventArgs e)
-        {
-            _userIsDraggingSlider = true;
-        }
-        private void sliProgress_DragCompleted(object sender, DragCompletedEventArgs e)
-        {
-            _userIsDraggingSlider = false;
-            _mediaPlayer.Position = TimeSpan.FromSeconds(sliProgress.Value);
-        }
-        private void sliProgress_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if(_mediaPlayer != null)
-            {
-                lblProgressStatus.Text = $"{TimeSpan.FromSeconds(sliProgress.Value).ToString(@"mm\:ss")} / {_mediaPlayer.NaturalDuration.TimeSpan.ToString(@"mm\:ss")}";
-            }
-        }
-        private void Grid_MouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            _mediaPlayer.Volume += (e.Delta > 0) ? 0.1 : -0.1;
-        }
-        //End Player
-        //Texto
-        private async Task LoadText(List<Country> countries)
+        /// <summary>
+        /// Download Text about country
+        /// </summary>
+        /// <param name="countries"></param>
+        /// <returns></returns>
+        private async Task DownloadText(List<Country> countries)
         {
             await Task.Run(() =>
             {
@@ -607,29 +483,12 @@ namespace Countries
                     }
                 });
             });
-
-
-            //foreach(Country country in countries)
-            //{
-
-            //    try
-            //    {
-            //        // MessageBox.Show(country.Name.Substring(0, country.Name.IndexOf(' ')));
-            //        var response = await _apiService.GetText("https://en.wikipedia.org/w/api.php",
-            //            $"?format=xml&action=query&prop=extracts&titles={country.Name}&redirects=true", country.Name); //-Mudar o nome consoante o país
-
-            //        var output = (string)response.Result;
-            //        _dataService.SaveText(country.Alpha3Code, output);
-
-            //    }
-            //    catch(Exception e)
-            //    {
-            //        _dialogService.ShowMessage("Erro", e.Message);
-            //    }
-
-            //}           
-
         }
+        /// <summary>
+        /// Read Text 
+        /// </summary>
+        /// <param name="country"></param>
+        /// <returns></returns>
         private string ReadInfoCountry(Country country)
         {
             string file = $"{country.Alpha3Code}.txt";
@@ -658,26 +517,137 @@ namespace Countries
                 }
             }
             return info;
+        }        
+
+        private void ReportProgress(object sender, ProgressReport e)
+        {
+            ProgressBarLoad.Value = e.PercentComplet;
+            //PrintResults(e.SaveCountries);
         }
 
-        private void Btn_Exit_Click(object sender, RoutedEventArgs e)
+        private void TreeViewCountries_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            if(!_savedata)
+            if(TreeViewCountries.SelectedItem != null)
             {
-                if(MessageBox.Show("Important process in progress. Are you sure?", "Stop", MessageBoxButton.YesNo, MessageBoxImage.Stop) == MessageBoxResult.Yes)
+                var getcountry = TreeViewCountries.SelectedItem as Country;
+                if(getcountry != null && getcountry.GetType().Name == "Country")
                 {
-                    Application.Current.Shutdown();
+                    var countrySelect = Countries.SingleOrDefault(x => x.Name == getcountry.Name);
+                    if(countrySelect != null)
+                    {
+                        ShowInfoCountry(countrySelect);
+                    }
                 }
+            }
+        }
+
+        private void TextBoxSearch_SelectionChanged(object sender, RoutedEventArgs e)
+        {
+            List<Country> Temp = null;
+            if(/*/*Countries.Count > 0 &&*/ TextBoxSearch.Text != "Search for Country")
+            {
+                Temp = Countries.FindAll(c => c.Name.ToLower().Contains(TextBoxSearch.Text.ToLower())).ToList();
+                TreeViewCountries.ItemsSource = GetContinents(Temp.ToList());
+
+                // TreeViewCountries.ItemContainerStyle = (new Setter(TreeViewItem.IsExpandedProperty, value: "True"));
+            }
+        }
+
+        private void TextBoxSearch_GotFocus(object sender, RoutedEventArgs e)
+        {
+            TextBoxSearch.Text = string.Empty;
+        }
+
+        private void TextBoxSearch_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if(TextBoxSearch.Text == string.Empty)
+            {
+                TextBoxSearch.Text = "Search for Country";
+            }
+        }
+
+        private void TextBoxInput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if(!string.IsNullOrEmpty(TextBoxInput.Text))
+            {
+                Conversion();
             }
             else
             {
-                Application.Current.Shutdown();
+                TextBoxOutput.Text = string.Empty;
             }
 
         }
 
+        private void btnSwitchCurrency_Click(object sender, RoutedEventArgs e)
+        {
+            SwitchCurrency();
+        }
 
+        private void Btn_systemInfo_Click(object sender, RoutedEventArgs e)
+        {
+            WinInfo winInfo = new WinInfo();
+            winInfo.ShowDialog();
+        }
 
-        //Texto
+        private void Btn_Close_Click(object sender, RoutedEventArgs e)
+        {
+            MainPanel.Visibility = Visibility.Hidden;
+            _mediaPlayer.Close();
+            LabelHour.Visibility = Visibility.Visible;
+        }
+
+        private void btnPlay_Click(object sender, RoutedEventArgs e)
+        {
+            _mediaPlayer.Play();
+        }
+
+        private void btnPause_Click(object sender, RoutedEventArgs e)
+        {
+            _mediaPlayer.Pause();
+        }
+
+        private void btnStop_Click(object sender, RoutedEventArgs e)
+        {
+            _mediaPlayer.Stop();
+        }
+
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            LabelHour.Content = DateTime.Now.ToLocalTime().ToLongTimeString();
+            if((_mediaPlayer.Source != null) && (_mediaPlayer.NaturalDuration.HasTimeSpan) && (!_userIsDraggingSlider))
+            {
+                sliProgress.Minimum = 0;
+                sliProgress.Maximum = _mediaPlayer.NaturalDuration.TimeSpan.TotalSeconds;
+                sliProgress.Value = _mediaPlayer.Position.TotalSeconds;
+
+                pbVolume.Value = _mediaPlayer.Volume;
+            }
+        }
+
+        private void sliProgress_DragStarted(object sender, DragStartedEventArgs e)
+        {
+            _userIsDraggingSlider = true;
+        }
+
+        private void sliProgress_DragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            _userIsDraggingSlider = false;
+            _mediaPlayer.Position = TimeSpan.FromSeconds(sliProgress.Value);
+        }
+
+        private void sliProgress_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if(_mediaPlayer != null)
+            {
+                lblProgressStatus.Text = $"{TimeSpan.FromSeconds(sliProgress.Value).ToString(@"mm\:ss")} / {_mediaPlayer.NaturalDuration.TimeSpan.ToString(@"mm\:ss")}";
+            }
+        }
+
+        private void Grid_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            _mediaPlayer.Volume += (e.Delta > 0) ? 0.1 : -0.1;
+        }
+       
     }
 }

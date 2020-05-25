@@ -191,10 +191,8 @@ namespace Countries.Service
                 else
                     output = parts[2] + parts[3];
 
-                //Remove the tags from the XML
-                //output = Regex.Replace(output, @"&lt;[^&gt;]+&gt;", string.Empty); //Remove Tags
                 output = Regex.Replace(output, @"(&lt;[\s\S]+?&gt;)", string.Empty); //Remove  Tags
-                output = Regex.Replace(output, @"\t|\n|\r", string.Empty); //Espaços em branco
+                output = Regex.Replace(output, @"\t|\n|\r", string.Empty); //Remove Tabs or White Space 
 
                 //GC.Collect();
                 //GC.WaitForPendingFinalizers();
