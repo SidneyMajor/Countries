@@ -27,6 +27,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using Button = System.Windows.Controls.Button;
 
 namespace Countries
 {
@@ -44,7 +45,7 @@ namespace Countries
         private RootCovid _rootCovid;
         private MediaPlayer _mediaPlayer;
         private bool _userIsDraggingSlider;
-        private bool _savedata=false;
+        private bool _savedata = false;
 
         public MainWindow()
         {
@@ -84,11 +85,11 @@ namespace Countries
                     {
                         e.Cancel = true;
                     }
-                }                
+                }
             }
             catch(Exception ex)
             {
-               _dialogService.ShowMessage("Erro",ex.Message);
+                _dialogService.ShowMessage("Erro", ex.Message);
             }
 
         }
@@ -209,7 +210,7 @@ namespace Countries
                     await _dataService.SaveDataRatesAsync(Rates, progress);
                 if(_rootCovid != null)
                     await _dataService.SaveDataInfoCovidAsync(_rootCovid, progress);
-                LabelStatus.Content = string.Format("Last Upload from internet at {0:F}", DateTime.Now);               
+                LabelStatus.Content = string.Format("Last Upload from internet at {0:F}", DateTime.Now);
             }
             else
             {
@@ -238,7 +239,7 @@ namespace Countries
             Progress<ProgressReport> progress = new Progress<ProgressReport>();
             progress.ProgressChanged += ReportProgress;
             var response = await _apiService.GetCountries("https://restcountries.eu", "/rest/v2", progress);
-            Countries = (List<Country>)response.Result;           
+            Countries = (List<Country>)response.Result;
         }
         /// <summary>
         /// Load APi Info covid19
@@ -313,7 +314,9 @@ namespace Countries
         /// <returns></returns>
         private async Task LoadLocalCountries()
         {
-            Countries = await _dataService.GetDataCountriesAsync();
+            Progress<ProgressReport> progress = new Progress<ProgressReport>();
+            progress.ProgressChanged += ReportProgress;
+            Countries = await _dataService.GetDataCountriesAsync(progress);
         }
         /// <summary>
         /// Load Loacal Info Rates
@@ -330,13 +333,15 @@ namespace Countries
         private async Task LoadLocalInfoCovid19()
         {
             _rootCovid = await _dataService.GetDataInfoCovid19Async();
-        }    
+        }
         /// <summary>
         /// Show same informations of Current Country
         /// </summary>
         /// <param name="countrySelect"></param>
         private void ShowInfoCountry(Country countrySelect)
         {
+            BorderInfo.DataContext = null;
+          
             _mediaPlayer.Close();
             LabelHour.Visibility = Visibility.Hidden;
             MainPanel.Visibility = Visibility.Visible;
@@ -361,8 +366,8 @@ namespace Countries
                 if(_rootCovid.Countries.Count != 0)
                 {
                     var infocovid = _rootCovid.Countries.SingleOrDefault(c => c.CountryCode == countrySelect.Alpha2Code);
-                    if(infocovid != null)                    
-                        PanelCovidCountry.DataContext = infocovid;  
+                    if(infocovid != null)
+                        PanelCovidCountry.DataContext = infocovid;
                 }
 
                 if(!_rootCovid.Global.Equals(null))
@@ -380,6 +385,8 @@ namespace Countries
             }
             listBoxCurrency.ItemsSource = countrySelect.Currencies;
             listBoxLanguage.ItemsSource = countrySelect.Languages;
+            //teste
+            Borders(countrySelect);
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -450,7 +457,7 @@ namespace Countries
         {
             DispatcherTimer timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(second);
-            timer.Tick += timer_Tick;            
+            timer.Tick += timer_Tick;
             timer.Start();
         }
         /// <summary>
@@ -466,9 +473,8 @@ namespace Countries
                 {
                     try
                     {
-                        // MessageBox.Show(country.Name.Substring(0, country.Name.IndexOf(' ')));
                         var response = await _apiService.GetText("https://en.wikipedia.org/w/api.php",
-                                   $"?format=xml&action=query&prop=extracts&titles={country.Name}&redirects=true", country.Name); //-Mudar o nome consoante o país
+                                   $"?format=xml&action=query&prop=extracts&titles={country.Name}&redirects=true", country.Name); 
 
                         var output = (string)response.Result;
                         _dataService.SaveText(country.Alpha3Code, output);
@@ -491,7 +497,7 @@ namespace Countries
         /// <returns></returns>
         private string ReadInfoCountry(Country country)
         {
-            string file = $"{country.Alpha3Code}.txt";
+            string file = $"{Environment.CurrentDirectory}\\InfoWikiCountry\\{country.Alpha3Code}.txt";
 
             string info = string.Empty;
             StreamReader sr;
@@ -517,7 +523,18 @@ namespace Countries
                 }
             }
             return info;
-        }        
+        }
+        /// <summary>
+        /// Get Borders
+        /// </summary>
+        /// <param name="country"></param>
+        private void Borders(Country country)
+        {
+            List<Country> bordersCountry = new List<Country>();
+
+            bordersCountry = Countries.FindAll(c => c.Borders.Contains(country.Alpha3Code));
+            BorderItem.ItemsSource = bordersCountry;
+        }
 
         private void ReportProgress(object sender, ProgressReport e)
         {
@@ -544,12 +561,10 @@ namespace Countries
         private void TextBoxSearch_SelectionChanged(object sender, RoutedEventArgs e)
         {
             List<Country> Temp = null;
-            if(/*/*Countries.Count > 0 &&*/ TextBoxSearch.Text != "Search for Country")
+            if( TextBoxSearch.Text != "Search for Country")
             {
                 Temp = Countries.FindAll(c => c.Name.ToLower().Contains(TextBoxSearch.Text.ToLower())).ToList();
                 TreeViewCountries.ItemsSource = GetContinents(Temp.ToList());
-
-                // TreeViewCountries.ItemContainerStyle = (new Setter(TreeViewItem.IsExpandedProperty, value: "True"));
             }
         }
 
@@ -648,6 +663,22 @@ namespace Countries
         {
             _mediaPlayer.Volume += (e.Delta > 0) ? 0.1 : -0.1;
         }
-       
+        //Get Select Border
+        private Country GetBorderCountry;
+        private void btn_Border_Click(object sender, RoutedEventArgs e)
+        {
+            BorderInfo.Visibility = Visibility.Visible;
+            Button button = sender as Button;
+            var item = (Country)button.DataContext;            
+            BorderInfo.DataContext = item;
+            GetBorderCountry = item;
+        }
+
+        private void ViewMore_Click(object sender, RoutedEventArgs e)
+        {
+            BorderInfo.Visibility = Visibility.Hidden;
+            TabControlMain.SelectedIndex = 0;
+            ShowInfoCountry(GetBorderCountry);
+        }
     }
 }

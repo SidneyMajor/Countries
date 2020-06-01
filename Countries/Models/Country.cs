@@ -27,7 +27,7 @@ namespace Countries.Models
         public double? Area { get; set; }
         public string Gini { get; set; }
         //public List<string> Timezones { get; set; }
-        //public List<string> Borders { get; set; }
+        public List<string> Borders { get; set; }
         //public string NativeName { get; set; }
         //public string NumericCode { get; set; }
         public List<Currency> Currencies { get; set; } 

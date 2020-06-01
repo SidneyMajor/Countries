@@ -31,6 +31,11 @@ namespace Countries.Service
             {
                 Directory.CreateDirectory("Data");
             }
+
+            if(!Directory.Exists("InfoWikiCountry"))
+            {
+                Directory.CreateDirectory("InfoWikiCountry");
+            }
             string path = @"Data\Countries.sqlite";
 
             try
@@ -47,6 +52,99 @@ namespace Countries.Service
         }
 
         #region Country
+        /// <summary>
+        /// Creat all table to dbo Countries
+        /// </summary>
+        private void CreatALLTableCountry()
+        {
+            try
+            {
+                //Country
+                _command.CommandText = "create table if not exists countries(" +
+                     "Name varchar(100)," +
+                     "Capital varchar(100)," +
+                     "Region varchar(100), " +
+                     "Subregion varchar(100), " +
+                     "Population int," +
+                     "Demonym varchar(100)," +
+                     "Area real," +
+                     "Gini real," +
+                     "LocalUpdate DateTime," +                    
+                     "Alpha2Code char(2)," +
+                     "Alpha3Code char(3) PRIMARY KEY)";
+
+                _command.Connection = _connection;
+                _command.ExecuteNonQuery();
+                //Currency
+                _command.CommandText = "create table if not exists currency(" +
+                "Name varchar(100)," +
+                "Code char(3) primary key," +
+                "Symbol varchar(10))";
+                _command.Connection = _connection;
+                _command.ExecuteNonQuery();
+                //Language
+                _command.CommandText = "create table if not exists language(" +
+                "Iso639_1 char(2)," +
+                "Iso639_2 char(3) PRIMARY KEY," +
+                "Name varchar(100)," +
+                "NativeName varchar(100))";
+                _command.Connection = _connection;
+                _command.ExecuteNonQuery();
+                //CountryCurrency
+                _command.CommandText = "create table if not exists countryCurrency(" +
+               "CodeCurrency char(3)," +
+               "Alpha3Code char(3)," +
+               "PRIMARY KEY (Alpha3Code, CodeCurrency)," +
+               "FOREIGN KEY (Alpha3Code) REFERENCES countries(Alpha3Code)," +
+               "FOREIGN KEY (CodeCurrency) REFERENCES currency(Code))";
+                _command.Connection = _connection;
+                _command.ExecuteNonQuery();
+                //CountryLanguage
+                _command.CommandText = "create table if not exists countryLanguage(" +
+               "CodeLanguage char(3)," +
+               "Alpha3Code char(3)," +
+               "PRIMARY KEY (Alpha3Code, CodeLanguage)," +
+               "FOREIGN KEY (CodeLanguage) REFERENCES Language(Iso639_2)," +
+               "FOREIGN KEY (Alpha3Code) REFERENCES countries(Alpha3Code))";
+                _command.Connection = _connection;
+                _command.ExecuteNonQuery();
+                //Borders
+                _command.CommandText = "create table if not exists borders(" +
+                "border char(3) PRIMARY KEY)";
+                _command.Connection = _connection;
+                _command.ExecuteNonQuery();
+                //CountryBorders
+                _command.CommandText = "create table if not exists countryBorders(" +
+               "CodeBorder char(3)," +
+               "Alpha2Code char(2)," +
+               "PRIMARY KEY (Alpha2Code, CodeBorder)," +
+               "FOREIGN KEY (Alpha2Code) REFERENCES countries(Alpha2Code)," +
+               "FOREIGN KEY (CodeBorder) REFERENCES borders(border))";
+                _command.Connection = _connection;
+                _command.ExecuteNonQuery();
+                //Translations
+                _command.CommandText = "create table if not exists translations(" +
+               "De varchar(50)," +
+               "Es varchar(50)," +
+               "Fr varchar(50)," +
+               "Ja varchar(50)," +
+               "It varchar(50)," +
+               "Br varchar(50)," +
+               "Pt varchar(50)," +
+               "Nl varchar(50)," +
+               "Hr varchar(50)," +
+               "Fa varchar(50)," +
+               "TranslationCode char(3) PRIMARY KEY," +
+               "FOREIGN KEY (TranslationCode) REFERENCES countries(Alpha3Code))";
+                _command.Connection = _connection;
+                _command.ExecuteNonQuery();
+            }
+            catch(Exception e)
+            {
+
+                _dialogService.ShowMessage("Erro", e.Message);
+            }
+        }
         /// <summary>
         /// Download Country Anthem
         /// </summary>
@@ -99,88 +197,7 @@ namespace Countries.Service
                 }
 
             }           
-        }
-        /// <summary>
-        /// Creat all table to dbo Countries
-        /// </summary>
-        private void CreatALLTableCountry()
-        {
-            try
-            {
-                //Country
-                _command.CommandText = "create table if not exists countries(" +
-                     "Name varchar(100)," +
-                     "Capital varchar(100)," +
-                     "Region varchar(100), " +
-                     "Subregion varchar(100), " +
-                     "Population int," +
-                     "Demonym varchar(100)," +
-                     "Area real," +
-                     "Gini real," +
-                     "LocalUpdate DateTime," +
-                     //"FlagPath varchar(200)," +
-                     //"FlagPathIco varchar(200)," +
-                     "Alpha2Code char(2)," +
-                     "Alpha3Code char(3) PRIMARY KEY)";
-
-                _command.Connection = _connection;
-                _command.ExecuteNonQuery();
-                //Currency
-                _command.CommandText = "create table if not exists currency(" +
-                "Name varchar(100)," +
-                "Code char(3) primary key," +
-                "Symbol varchar(10))";
-                _command.Connection = _connection;
-                _command.ExecuteNonQuery();
-                //Language
-                _command.CommandText = "create table if not exists language(" +
-                "Iso639_1 char(2)," +
-                "Iso639_2 char(3) PRIMARY KEY," +
-                "Name varchar(100)," +
-                "NativeName varchar(100))";
-                _command.Connection = _connection;
-                _command.ExecuteNonQuery();
-                //CountryCurrency
-                _command.CommandText = "create table if not exists countryCurrency(" +
-               "CodeCurrency char(3)," +
-               "Alpha3Code char(3)," +
-               "PRIMARY KEY (Alpha3Code, CodeCurrency)," +
-               "FOREIGN KEY (Alpha3Code) REFERENCES countries(Alpha3Code)," +
-               "FOREIGN KEY (CodeCurrency) REFERENCES currency(Code))";
-                _command.Connection = _connection;
-                _command.ExecuteNonQuery();
-                //CountryLanguage
-                _command.CommandText = "create table if not exists countryLanguage(" +
-               "CodeLanguage char(3)," +
-               "Alpha3Code char(3)," +
-               "PRIMARY KEY (Alpha3Code, CodeLanguage)," +
-               "FOREIGN KEY (CodeLanguage) REFERENCES Language(Iso639_2)," +
-               "FOREIGN KEY (Alpha3Code) REFERENCES countries(Alpha3Code))";
-                _command.Connection = _connection;
-                _command.ExecuteNonQuery();
-                //Translations
-                _command.CommandText = "create table if not exists translations(" +
-               "De varchar(50)," +
-               "Es varchar(50)," +
-               "Fr varchar(50)," +
-               "Ja varchar(50)," +
-               "It varchar(50)," +
-               "Br varchar(50)," +
-               "Pt varchar(50)," +
-               "Nl varchar(50)," +
-               "Hr varchar(50)," +
-               "Fa varchar(50)," +
-               "TranslationCode char(3) PRIMARY KEY," +
-               "FOREIGN KEY (TranslationCode) REFERENCES countries(Alpha3Code))";
-                _command.Connection = _connection;
-                _command.ExecuteNonQuery();
-            }
-            catch(Exception e)
-            {
-
-                _dialogService.ShowMessage("Erro", e.Message);
-            }
-        }
+        }      
         /// <summary>
         /// Dawload and corvert image svg to jpg
         /// </summary>
@@ -322,6 +339,8 @@ namespace Countries.Service
                     await InsertCurrencyAsync(country, DistinctData);
                     //Language
                     await InsertLanguageAsync(country, DistinctData);
+                    //Borders
+                    await InsertBordersAsync(country, DistinctData);
                     //Progress Report
                     report.SaveCountries.Add(country);
                     report.PercentComplet = (report.SaveCountries.Count * 100) / countries.Count;
@@ -467,6 +486,49 @@ namespace Countries.Service
             }
         }
         /// <summary>
+        /// Insert Borders
+        /// </summary>
+        /// <param name="country"></param>
+        /// <param name="DistinctData"></param>
+        /// <returns></returns>
+        private async Task InsertBordersAsync(Country country, List<string> DistinctData)
+        {
+            foreach(string language in country.Borders)
+            {             
+
+                try
+                {
+                    if(!string.IsNullOrEmpty(language))
+                    {
+                        //CountryBorders
+                        _command.Parameters.AddWithValue("@language", language);
+                        _command.Parameters.AddWithValue("@alpha2Code", country.Alpha2Code);
+                        _command.CommandText = "INSERT INTO CountryBorders(CodeBorder, Alpha2Code)" +
+                         "values(@language, @alpha2Code)";
+                        _command.Connection = _connection;
+                        await Task.Run(() => _command.ExecuteNonQuery());
+
+                        if(!DistinctData.Contains(language))
+                        {
+                            //Borders
+                            _command.Parameters.AddWithValue("@language", language);
+
+                            _command.CommandText = "INSERT INTO borders(border)" +
+                             "values(@language)";
+                            _command.Connection = _connection;
+                            await Task.Run(() => _command.ExecuteNonQuery());
+
+                            DistinctData.Add(language);
+                        } 
+                    }
+                }
+                catch(Exception e)
+                {
+                    _dialogService.ShowMessage("Erro", e.Message);
+                }
+            }
+        }
+        /// <summary>
         /// Insert Translations DBo
         /// </summary>
         /// <param name="country"></param>
@@ -560,6 +622,10 @@ namespace Countries.Service
                 _command.CommandText = "delete from language";
                 _command.Connection = _connection;
                 await Task.Run(() => _command.ExecuteNonQuery());
+                //Delete Borders
+                _command.CommandText = "delete from borders";
+                _command.Connection = _connection;
+                await Task.Run(() => _command.ExecuteNonQuery());
                 //Delete Translations
                 _command.CommandText = "delete from translations";
                 _command.Connection = _connection;
@@ -574,6 +640,10 @@ namespace Countries.Service
                 await Task.Run(() => _command.ExecuteNonQuery());
                 //Delete Country Language
                 _command.CommandText = "delete from countryLanguage";
+                _command.Connection = _connection;
+                await Task.Run(() => _command.ExecuteNonQuery());
+                //Delete Country Borders
+                _command.CommandText = "delete from countryBorders";
                 _command.Connection = _connection;
                 await Task.Run(() => _command.ExecuteNonQuery());
             }
@@ -652,6 +722,34 @@ namespace Countries.Service
             }
         }
         /// <summary>
+        /// Populate Borders To List
+        /// </summary>
+        /// <param name="country"></param>
+        /// <returns></returns>
+        private async Task GetBordersAsync(Country country)
+        {
+            try
+            {
+                _command.Parameters.AddWithValue("@alpha2Code", country.Alpha2Code);
+                _command.CommandText = $"SELECT border From borders INNER JOIN countryBorders On borders.border=countryBorders.CodeBorder where Alpha2Code=@alpha2Code";
+                _command.Connection = _connection;
+                //Lê cada registo
+                SQLiteDataReader readerBorders = _command.ExecuteReader();
+                await Task.Run(() =>
+                {
+                    while(readerBorders.Read())
+                    {
+                        country.Borders.Add((string)readerBorders["border"]);
+                    }
+                    readerBorders.Close();
+                });
+            }
+            catch(Exception e)
+            {
+                _dialogService.ShowMessage("Erro", e.Message);
+            }
+        }
+        /// <summary>
         /// Populate Traslations To Country
         /// </summary>
         /// <param name="country"></param>
@@ -695,8 +793,9 @@ namespace Countries.Service
         /// Populate Country To List
         /// </summary>
         /// <returns></returns>
-        public async Task<List<Country>> GetDataCountriesAsync()
+        public async Task<List<Country>> GetDataCountriesAsync(IProgress<ProgressReport> progress)
         {
+            ProgressReport report = new ProgressReport();
             List<Country> countries = new List<Country>();
             try
             {
@@ -724,7 +823,8 @@ namespace Countries.Service
                             LocalUpdate = Convert.ToDateTime(reader["LocalUpdate"].ToString()),
                             Currencies = new List<Currency>(),
                             Languages = new List<Language>(),
-                        });
+                            Borders = new List<string>()
+                        }); ;
                     }
                 });
                 reader.Close();
@@ -734,6 +834,11 @@ namespace Countries.Service
                     await GetTrasnlatinsAsync(country);
                     await GetCurrencyAsync(country);
                     await GetLanguageAsync(country);
+                    await GetBordersAsync(country);
+
+                    report.SaveCountries.Add(country);
+                    report.PercentComplet = (report.SaveCountries.Count * 100) / countries.Count;
+                    progress.Report(report);
                 }
                 _connection.Close();
                 return countries;
@@ -752,7 +857,12 @@ namespace Countries.Service
         /// <param name="alpha3Code"></param>
         /// <param name="output"></param>
         public void SaveText(string alpha3Code, string output)
-        {
+        {            
+        
+
+            string fileBackup = Environment.CurrentDirectory + @"\Backup\InfoWikiCountry\" + $"{alpha3Code}.txt";
+            string file = Environment.CurrentDirectory + @"\InfoWikiCountry\"+$"{ alpha3Code}.txt";
+
             if(alpha3Code != "COG" && alpha3Code != "GEO")
             {
                 try
@@ -762,10 +872,8 @@ namespace Countries.Service
                     else if(!string.IsNullOrEmpty(output) && output.Contains("\n"))
                         output = output.Replace("\n", "");
 
-                    string file = $"{alpha3Code}.txt";
                     if(!string.IsNullOrEmpty(output))
                     {
-
                         StreamWriter sw = new StreamWriter(file, false);
                         if(!File.Exists(file))
                         {
@@ -776,11 +884,13 @@ namespace Countries.Service
                     }
                     else
                     {
-                        string fileBackup = $"{Environment.CurrentDirectory}\\InfoWikiCountry\\{alpha3Code}.txt";
                         if(File.Exists(fileBackup))
                         {
                             FileInfo files = new FileInfo(fileBackup);
-                            File.Delete(file);
+                            if(File.Exists(file))
+                            {
+                                File.Delete(file); 
+                            }
                             files.CopyTo(file);
                         }
                     }
@@ -795,12 +905,13 @@ namespace Countries.Service
             {
                 try
                 {
-                    string fileBackup = $"{Environment.CurrentDirectory}\\InfoWikiCountry\\{alpha3Code}.txt";
-                    string file = $"{alpha3Code}.txt";
                     if(File.Exists(fileBackup))
                     {
                         FileInfo files = new FileInfo(fileBackup);
-                        File.Delete(file);
+                        if(File.Exists(file))
+                        {
+                            File.Delete(file);
+                        }
                         files.CopyTo(file);
                     }
                 }
