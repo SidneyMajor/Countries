@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Countries.Models
+﻿namespace Countries.Models
 {
-   public  class Rate
+    public class Rate
     {
         public int RateId { get; set; }
 

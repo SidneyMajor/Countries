@@ -42,7 +42,7 @@ namespace Countries.Service
                 }
                 var getValues = JsonConvert.DeserializeObject<List<Country>>(result);
 
-                report.SaveCountries=getValues;
+                report.SaveCountries = getValues;
                 report.PercentComplet = (report.SaveCountries.Count * 100) / getValues.Count;
                 progress.Report(report);
 
@@ -50,7 +50,7 @@ namespace Countries.Service
                 {
                     IsSuccess = true,
                     Result = getValues,
-                };                
+                };
 
             }
             catch(Exception ex)
@@ -225,4 +225,4 @@ namespace Countries.Service
 
     }
 }
-    
+

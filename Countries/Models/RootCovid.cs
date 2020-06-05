@@ -3,6 +3,7 @@ namespace Countries.Models
 {
     using System;
     using System.Collections.Generic;
+
     public class RootCovid
     {
         public Global Global { get; set; } = new Global();

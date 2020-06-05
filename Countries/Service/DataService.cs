@@ -11,7 +11,6 @@ namespace Countries.Service
     using System.Linq;
     using System.Net;
     using System.Threading.Tasks;
-    using System.Windows;
 
     public class DataService
     {
@@ -69,7 +68,7 @@ namespace Countries.Service
                      "Demonym varchar(100)," +
                      "Area real," +
                      "Gini real," +
-                     "LocalUpdate DateTime," +                    
+                     "LocalUpdate DateTime," +
                      "Alpha2Code char(2)," +
                      "Alpha3Code char(3) PRIMARY KEY)";
 
@@ -151,8 +150,9 @@ namespace Countries.Service
         /// <param name="countries"></param>
         /// <param name="progress"></param>
         /// <returns></returns>
-        public async Task CountryAnthemAsync(List<Country> countries, IProgress<ProgressReport> progress)        {
-          
+        public async Task CountryAnthemAsync(List<Country> countries, IProgress<ProgressReport> progress)
+        {
+
             DirectoryInfo path = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic));
             DirectoryInfo pathBackup = new DirectoryInfo(Environment.CurrentDirectory);
             ProgressReport report = new ProgressReport();
@@ -196,8 +196,8 @@ namespace Countries.Service
                     progress.Report(report);
                 }
 
-            }           
-        }      
+            }
+        }
         /// <summary>
         /// Dawload and corvert image svg to jpg
         /// </summary>
@@ -494,7 +494,7 @@ namespace Countries.Service
         private async Task InsertBordersAsync(Country country, List<string> DistinctData)
         {
             foreach(string language in country.Borders)
-            {             
+            {
 
                 try
                 {
@@ -519,7 +519,7 @@ namespace Countries.Service
                             await Task.Run(() => _command.ExecuteNonQuery());
 
                             DistinctData.Add(language);
-                        } 
+                        }
                     }
                 }
                 catch(Exception e)
@@ -570,7 +570,7 @@ namespace Countries.Service
             if(string.IsNullOrEmpty(country.Capital))
                 country.Capital = "Not available";
             if(string.IsNullOrEmpty(country.Region))
-                country.Region = "Not available";
+                country.Region = "Unassigned";
             if(string.IsNullOrEmpty(country.Subregion))
                 country.Subregion = "Not available";
             if(country.Gini == null || string.IsNullOrEmpty(country.Gini))
@@ -666,7 +666,7 @@ namespace Countries.Service
                 _command.Parameters.AddWithValue("@alpha3Code", country.Alpha3Code);
                 _command.CommandText = $"SELECT Name, Code, Symbol From currency INNER JOIN CountryCurrency On currency.code=CountryCurrency.codeCurrency where Alpha3Code=@alpha3Code";
                 _command.Connection = _connection;
-                //Lê cada registo
+
                 SQLiteDataReader readerCurrency = _command.ExecuteReader();
                 await Task.Run(() =>
                 {
@@ -699,7 +699,7 @@ namespace Countries.Service
                 _command.Parameters.AddWithValue("@alpha3Code", country.Alpha3Code);
                 _command.CommandText = $"SELECT Iso639_1, Iso639_2, Name, NativeName From language INNER JOIN CountryLanguage On language.Iso639_2=CountryLanguage.CodeLanguage where Alpha3Code=@alpha3Code";
                 _command.Connection = _connection;
-                //Lê cada registo
+
                 SQLiteDataReader readerLanguage = _command.ExecuteReader();
                 await Task.Run(() =>
                 {
@@ -733,7 +733,7 @@ namespace Countries.Service
                 _command.Parameters.AddWithValue("@alpha2Code", country.Alpha2Code);
                 _command.CommandText = $"SELECT border From borders INNER JOIN countryBorders On borders.border=countryBorders.CodeBorder where Alpha2Code=@alpha2Code";
                 _command.Connection = _connection;
-                //Lê cada registo
+
                 SQLiteDataReader readerBorders = _command.ExecuteReader();
                 await Task.Run(() =>
                 {
@@ -761,7 +761,7 @@ namespace Countries.Service
                 _command.Parameters.AddWithValue("@alpha3Code", country.Alpha3Code);
                 _command.CommandText = $"SELECT De, Es, Fr, Ja, It, Br, Pt, Nl, Hr, Fa From translations where TranslationCode = @alpha3Code";
                 _command.Connection = _connection;
-                //Lê cada registo
+
                 SQLiteDataReader readerTranslations = _command.ExecuteReader();
                 await Task.Run(() =>
                 {
@@ -801,7 +801,7 @@ namespace Countries.Service
             {
                 _command.CommandText = "SELECT Name, Capital, Region, Subregion, Population, Demonym,LocalUpdate, Area, Gini, Alpha2Code, Alpha3Code From countries";
                 _command.Connection = _connection;
-                //Lê cada registo
+
                 SQLiteDataReader reader = _command.ExecuteReader();
 
                 await Task.Run(() =>
@@ -857,11 +857,11 @@ namespace Countries.Service
         /// <param name="alpha3Code"></param>
         /// <param name="output"></param>
         public void SaveText(string alpha3Code, string output)
-        {            
-        
+        {
+
 
             string fileBackup = Environment.CurrentDirectory + @"\Backup\InfoWikiCountry\" + $"{alpha3Code}.txt";
-            string file = Environment.CurrentDirectory + @"\InfoWikiCountry\"+$"{ alpha3Code}.txt";
+            string file = Environment.CurrentDirectory + @"\InfoWikiCountry\" + $"{ alpha3Code}.txt";
 
             if(alpha3Code != "COG" && alpha3Code != "GEO")
             {
@@ -889,7 +889,7 @@ namespace Countries.Service
                             FileInfo files = new FileInfo(fileBackup);
                             if(File.Exists(file))
                             {
-                                File.Delete(file); 
+                                File.Delete(file);
                             }
                             files.CopyTo(file);
                         }
@@ -989,7 +989,7 @@ namespace Countries.Service
                 _command.CommandText = "select RateId, Code, TaxRate, Name from Rates";
 
                 _command.Connection = _connection;
-                //Lê cada registo
+
                 SQLiteDataReader reader = _command.ExecuteReader();
 
                 await Task.Run(() =>
@@ -1054,7 +1054,7 @@ namespace Countries.Service
             ProgressReport report = new ProgressReport();
             string pathCovid = @"Data\InfoCovid19.sqlite";
             string sql = "create table if not exists InfoCovid(Date varchar(15) Primary Key)";
-            // List<string> countrycode = new List<string>();
+
             try
             {
                 _connection = new SQLiteConnection("Data Source=" + pathCovid);
@@ -1165,7 +1165,7 @@ namespace Countries.Service
         /// <returns></returns>
         private async Task InsertCovidCountryAsync(CovidCountry covid)
         {
-           
+
             try
             {
                 //Insert row to covid InfoCovidCountry
@@ -1182,7 +1182,7 @@ namespace Countries.Service
                 _command.CommandText = "INSERT INTO InfoCovidCountry(infoDate, NewConfirmed, TotalConfirmed, NewDeaths, TotalDeaths, NewRecovered, TotalRecovered, Country, CountryCode, Slug)" +
                     "values(@infoDate, @newConfirmed, @totalConfirmed, @newDeaths, @totalDeaths, @newRecovered, @totalRecovered, @country, @countryCode, @slug)";
                 _command.Connection = _connection;
-                await Task.Run(() => _command.ExecuteNonQuery());               
+                await Task.Run(() => _command.ExecuteNonQuery());
             }
             catch(Exception e)
             {
@@ -1207,7 +1207,7 @@ namespace Countries.Service
                 _command.CommandText = "select Date from InfoCovid";
 
                 _command.Connection = _connection;
-                //Lê cada registo
+
                 SQLiteDataReader reader = _command.ExecuteReader();
 
                 await Task.Run(() =>
@@ -1248,7 +1248,7 @@ namespace Countries.Service
                 _command.Parameters.AddWithValue("@date", global.Date);
                 _command.CommandText = $"SELECT NewConfirmed, TotalConfirmed, NewDeaths, TotalDeaths, NewRecovered, TotalRecovered From InfoCovidGlobal ";
                 _command.Connection = _connection;
-                //Lê cada registo
+
                 SQLiteDataReader readerGlobal = _command.ExecuteReader();
                 await Task.Run(() =>
                 {
@@ -1285,7 +1285,7 @@ namespace Countries.Service
                 _command.Parameters.AddWithValue("@date", country.Date);
                 _command.CommandText = $"SELECT infoDate, NewConfirmed, TotalConfirmed, NewDeaths, TotalDeaths, NewRecovered, TotalRecovered, Country, CountryCode, Slug From InfoCovidCountry";
                 _command.Connection = _connection;
-                //Lê cada registo
+
                 SQLiteDataReader readerCountry = _command.ExecuteReader();
                 await Task.Run(() =>
                 {
