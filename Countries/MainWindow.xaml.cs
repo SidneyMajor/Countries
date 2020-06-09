@@ -34,6 +34,8 @@ namespace Countries
         private MediaPlayer _mediaPlayer;
         private bool _userIsDraggingSlider;
         private bool _savedata = false;
+        //Get Select Border
+        private Country GetBorderCountry;
 
         public MainWindow()
         {
@@ -48,7 +50,6 @@ namespace Countries
             Rates = new List<Rate>();
             _mediaPlayer = new MediaPlayer();
 
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("us");
             Timer(1);
         }
 
@@ -102,9 +103,13 @@ namespace Countries
                 {
                     item.FlagPath = new Uri(pathBackup + @"\Backup\Photos" + $"\\{item.Name.Replace("'", " ")}.jpg");
                 }
+                else if(File.Exists(pathBackup + @"\Backup\img.png"))
+                {
+                    item.FlagPathIco = new Uri(pathBackup + @"\Backup\img.png");
+                }
                 else
                 {
-                    item.FlagPath = new Uri(pathBackup + @"\Backup\img.png");
+                    _dialogService.ShowMessage("Error", "Some Countries Flags are not available at the moment.");
                 }
                 //Country FlagPathIco
                 if(File.Exists(path + @"\Photos\PhotosIco" + $"\\{item.Name.Replace("'", " ")}.png"))
@@ -115,9 +120,13 @@ namespace Countries
                 {
                     item.FlagPathIco = new Uri(pathBackup + @"\Backup\Photos\PhotosIco" + $"\\{item.Name.Replace("'", " ")}.png");
                 }
-                else
+                else if(File.Exists(pathBackup + @"\Backup\img.png"))
                 {
                     item.FlagPathIco = new Uri(pathBackup + @"\Backup\img.png");
+                }
+                else
+                {
+                    _dialogService.ShowMessage("Error", "Some Countries Flags are not available at the moment.");
                 }
                 //Country AnthemPath
                 if(File.Exists(pathAudio + @"\Audio" + $"\\{item.Alpha2Code.ToLower()}.mp3"))
@@ -189,7 +198,7 @@ namespace Countries
             progress.ProgressChanged += ReportProgress;
 
             var connection = _networkService.CheckConnection();
-            if(!connection.IsSuccess)
+            if(connection.IsSuccess)
             {
                 await LoadApiCountries();
                 await LoadApiRates();
@@ -375,7 +384,7 @@ namespace Countries
             sliProgress.Value = 0;
             pbVolume.Value = 0;
             if(countrySelect.AnthemPath != null)
-                Player(countrySelect);                     
+                Player(countrySelect);
             //Visibility
             LabelHour.Visibility = Visibility.Hidden;
             LabelInfo.Visibility = Visibility.Hidden;
@@ -388,7 +397,7 @@ namespace Countries
             //Currency Converter
             TextBoxInput.Text = string.Empty;
             TextBoxOutput.Text = string.Empty;
-            CheckCurrency(countrySelect, Rates);            
+            CheckCurrency(countrySelect, Rates);
             //Covid19 Information
             if(_rootCovid != null)
             {
@@ -418,15 +427,15 @@ namespace Countries
             //Borders
             BorderInfo.DataContext = null;
             Borders(countrySelect);
-            //GC.Collect();
-            //GC.WaitForPendingFinalizers();
-            //GC.Collect();
+
+            TabControlMain.SelectedIndex = 0;
         }
         /// <summary>
         /// Convert Currency
         /// </summary>
         private void Conversion()
         {
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en");
             decimal value;
 
             if(!decimal.TryParse(TextBoxInput.Text, out value))
@@ -453,6 +462,7 @@ namespace Countries
             var convertedValue = value / (decimal)InputTax.TaxRate * (decimal)OutputTax.TaxRate;
 
             TextBoxOutput.Text = $"{convertedValue:C3}";
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("us");
         }
         /// <summary>
         /// Switch Currency to convert
@@ -528,7 +538,7 @@ namespace Countries
         private string ReadInfoCountry(Country country)
         {
             string file = $"{Environment.CurrentDirectory}\\InfoWikiCountry\\{country.Alpha3Code}.txt";
-            string fileBackup= $"{Environment.CurrentDirectory}\\Backup\\InfoWikiCountry\\{country.Alpha3Code}.txt";
+            string fileBackup = $"{Environment.CurrentDirectory}\\Backup\\InfoWikiCountry\\{country.Alpha3Code}.txt";
             string info = string.Empty;
             StreamReader sr;
 
@@ -582,7 +592,18 @@ namespace Countries
         {
             List<Country> bordersCountry = new List<Country>();
 
-            bordersCountry = Countries.FindAll(c => c.Borders.Contains(country.Alpha3Code));
+            foreach(var item in country.Borders)
+            {
+                foreach(var obj in Countries)
+                {
+                    if(item.Equals(obj.Alpha3Code))
+                    {
+                        bordersCountry.Add(obj);
+
+                    }
+                }
+            }
+
             if(bordersCountry.Count > 0)
             {
                 BorderItem.IsEnabled = true;
@@ -741,7 +762,7 @@ namespace Countries
             }
             catch(Exception)
             {
-               
+
             }
         }
 
@@ -750,8 +771,7 @@ namespace Countries
             if(_mediaPlayer != null)
                 _mediaPlayer.Volume += (e.Delta > 0) ? 0.1 : -0.1;
         }
-        //Get Select Border
-        private Country GetBorderCountry;
+        
         private void btn_Border_Click(object sender, RoutedEventArgs e)
         {
             BorderInfo.Visibility = Visibility.Visible;
@@ -763,8 +783,7 @@ namespace Countries
 
         private void ViewMore_Click(object sender, RoutedEventArgs e)
         {
-            BorderInfo.Visibility = Visibility.Hidden;
-            TabControlMain.SelectedIndex = 0;
+            BorderInfo.Visibility = Visibility.Hidden;            
             ShowInfoCountry(GetBorderCountry);
         }
 

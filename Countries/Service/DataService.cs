@@ -171,7 +171,6 @@ namespace Countries.Service
                     string fileBackup = pathBackup + @"\Backup\Audio" + $"\\{country.Alpha2Code.ToLower()}.mp3";
                     if(!File.Exists(fileName))
                     {
-
                         try
                         {
                             await client.DownloadFileTaskAsync($"http://www.nationalanthems.info/{country.Alpha2Code.ToLower()}.mp3", fileName);
@@ -239,7 +238,7 @@ namespace Countries.Service
 
                     FileInfo fileLength;
 
-                    if(!File.Exists(path + @"\Photos" + $"\\{name}.jpg" /*fileName*/))
+                    if(!File.Exists(path + @"\Photos" + $"\\{name}.jpg"))
                     {
                         try
                         {
@@ -281,7 +280,6 @@ namespace Countries.Service
                         }
                     }
                     flagPath.FlagPath = new Uri(path + @"\Photos" + $"\\{name}.jpg");
-                    //flagPath.FlagPath = new Uri(fileName);
                     flagPath.FlagPathIco = new Uri(fileNameIco);
                     report.SaveCountries.Add(flagPath);
                     report.PercentComplet = (report.SaveCountries.Count * 100) / countries.Count;
@@ -328,7 +326,7 @@ namespace Countries.Service
             {
                 foreach(Country country in countries)
                 {
-                    //Check values if it is null
+                    //Check values if is null
                     CheckDataCountry(country);
                     CheckDataTranslations(country.Translations);
                     //Country
