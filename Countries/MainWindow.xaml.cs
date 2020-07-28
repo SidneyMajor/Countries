@@ -193,6 +193,7 @@ namespace Countries
         /// <returns></returns>
         private async Task LoadCountries()
         {
+            LabelStatus.Content = string.Format("Data Upload from internet at {0:F}.", DateTime.Now);
             bool load;
             Progress<ProgressReport> progress = new Progress<ProgressReport>();
             progress.ProgressChanged += ReportProgress;
@@ -366,7 +367,7 @@ namespace Countries
             Rates = await _dataService.GetDataRatesAsync();
         }
         /// <summary>
-        /// Load Loa«cal Info covid19
+        /// Load Local Info covid19
         /// </summary>
         /// <returns></returns>
         private async Task LoadLocalInfoCovid19()
@@ -435,7 +436,7 @@ namespace Countries
         /// </summary>
         private void Conversion()
         {
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("en");
+            //Thread.CurrentThread.CurrentCulture = new CultureInfo("en-us");
             decimal value;
 
             if(!decimal.TryParse(TextBoxInput.Text, out value))
@@ -462,7 +463,7 @@ namespace Countries
             var convertedValue = value / (decimal)InputTax.TaxRate * (decimal)OutputTax.TaxRate;
 
             TextBoxOutput.Text = $"{convertedValue:C3}";
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("us");
+            //Thread.CurrentThread.CurrentCulture = new CultureInfo("us");
         }
         /// <summary>
         /// Switch Currency to convert
@@ -697,7 +698,7 @@ namespace Countries
             winInfo.ShowDialog();
         }
 
-        private void Btn_Close_Click(object sender, RoutedEventArgs e)
+        private async void Btn_Close_Click(object sender, RoutedEventArgs e)
         {
             MainPanel.Visibility = Visibility.Hidden;
 
@@ -707,7 +708,8 @@ namespace Countries
 
             LabelHour.Visibility = Visibility.Visible;
             LabelInfo.Visibility = Visibility.Visible;
-            TreeViewCountries.Focus();
+
+            TreeViewCountries.ItemsSource = await Task.Run(() => GetContinents(Countries));
         }
 
         private void btnPlay_Click(object sender, RoutedEventArgs e)
